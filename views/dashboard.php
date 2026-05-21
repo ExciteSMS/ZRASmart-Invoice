@@ -88,6 +88,29 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="panel_s stats-wrapper">
+                                    <div class="panel-body">
+                                        <div class="widget-dragger"></div>
+                                        <div class="row">
+                                            <div class="col-xs-8">
+                                                <span class="text-dark stats-title"><?php echo _l('zra_device_initialization_status'); ?></span>
+                                                <br />
+                                                <?php if ($device_initialized) { ?>
+                                                    <span class="stats-number text-success"><?php echo _l('zra_device_initialized'); ?></span>
+                                                <?php } else { ?>
+                                                    <span class="stats-number text-danger"><?php echo _l('zra_device_not_initialized'); ?></span>
+                                                <?php } ?>
+                                            </div>
+                                            <div class="col-xs-4 text-right">
+                                                <i class="fa fa-plug stats-icon <?php echo $device_initialized ? 'text-success' : 'text-danger'; ?>"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Quick Actions -->
                         <div class="row">

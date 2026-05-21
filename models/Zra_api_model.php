@@ -148,6 +148,36 @@ class Zra_api_model extends CI_Model
         return $response;
     }
 
+    public function get_sales_principals($data = [])
+    {
+        return $this->call_api('/trnsSales/selectPrincip', $data);
+    }
+
+    public function save_stock_items($data = [])
+    {
+        return $this->call_api('/stock/saveStockItems', $data);
+    }
+
+    public function save_stock_master($data = [])
+    {
+        return $this->call_api('/stockMaster/saveStockMaster', $data);
+    }
+
+    public function save_item($data = [])
+    {
+        return $this->call_api('/items/saveItem', $data);
+    }
+
+    public function update_item($data = [])
+    {
+        return $this->call_api('/items/updateItem', $data);
+    }
+
+    public function update_import_items($data = [])
+    {
+        return $this->call_api('/imports/updateImportItems', $data);
+    }
+
     /**
      * Prepare invoice data for ZRA API submission according to VSDC specification
      */

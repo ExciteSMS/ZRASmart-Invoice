@@ -126,6 +126,15 @@
                                             <label for="zra_device_serial" class="control-label clearfix"><?php echo _l('zra_device_serial'); ?></label>
                                             <?php echo render_input('zra_device_serial', '', get_option('zra_device_serial'), 'text', ['placeholder' => '20180520000000', 'maxlength' => '100']); ?>
                                             <small class="help-block"><?php echo _l('zra_device_serial_help'); ?></small>
+                                            <div class="mt-5">
+                                                <?php if (get_option('zra_device_initialized') == '1') { ?>
+                                                    <span class="label label-success"><?php echo _l('zra_device_initialized'); ?></span>
+                                                    <small class="text-success"><?php echo _l('zra_device_initialized_message'); ?></small>
+                                                <?php } else { ?>
+                                                    <span class="label label-danger"><?php echo _l('zra_device_not_initialized'); ?></span>
+                                                    <small class="text-danger"><?php echo _l('zra_device_not_initialized_message'); ?></small>
+                                                <?php } ?>
+                                            </div>
                                         </div>
                                         
                                         <div class="form-group">

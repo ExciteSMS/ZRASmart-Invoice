@@ -29,6 +29,7 @@ class Zra_martin_invoicing extends AdminController
             'failed_submissions' => $this->zra_api_model->get_failed_submissions(),
             'pending_submissions' => $this->zra_api_model->get_pending_submissions()
         ];
+        $data['device_initialized'] = get_option('zra_device_initialized') == '1';
         
         $this->load->view('dashboard', $data);
     }
