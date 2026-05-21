@@ -177,7 +177,11 @@ $(document).ready(function() {
             if (data.success) {
                 alert_float('success', '<?php echo _l("zra_invoice_submitted_successfully"); ?>');
                 // Remove row from table
-                btn.closest('tr').fadeOut();
+                btn.closest('tr').fadeOut(function() {
+                    $(this).remove();
+                    updateBulkActions();
+                    updateMasterCheckbox();
+                });
             } else {
                 alert_float('danger', '<?php echo _l("zra_invoice_submission_failed"); ?>: ' + data.message);
             }
@@ -230,10 +234,18 @@ $(document).ready(function() {
         } else if (checkedCheckboxes === totalCheckboxes) {
             $('#master-checkbox').prop('indeterminate', false);
             $('#master-checkbox').prop('checked', true);
+
+    // Initialize button state on page load
+    updateBulkActions();
+    updateMasterCheckbox();
         } else {
             $('#master-checkbox').prop('indeterminate', true);
         }
     }
+
+    // Initialize button state on page load
+    updateBulkActions();
+    updateMasterCheckbox();
     
     function submitBulkInvoices(invoiceIds) {
         $('#progress-modal').modal('show');
