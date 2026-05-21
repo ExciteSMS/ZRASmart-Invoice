@@ -123,14 +123,9 @@
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label for="zra_company_name" class="control-label clearfix"><?php echo _l('zra_company_name'); ?></label>
-                                            <?php echo render_input('zra_company_name', '', get_option('zra_company_name'), 'text', ['placeholder' => 'Your Company Name']); ?>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label for="zra_security_key" class="control-label clearfix"><?php echo _l('zra_security_key'); ?></label>
-                                            <?php echo render_input('zra_security_key', '', get_option('zra_security_key'), 'password', ['placeholder' => 'Your ZRA Security Key']); ?>
-                                            <small class="help-block"><?php echo _l('zra_security_key_help'); ?></small>
+                                            <label for="zra_device_serial" class="control-label clearfix"><?php echo _l('zra_device_serial'); ?></label>
+                                            <?php echo render_input('zra_device_serial', '', get_option('zra_device_serial'), 'text', ['placeholder' => '20180520000000', 'maxlength' => '100']); ?>
+                                            <small class="help-block"><?php echo _l('zra_device_serial_help'); ?></small>
                                         </div>
                                         
                                         <div class="form-group">
@@ -142,6 +137,9 @@
                                         <div class="form-group">
                                             <button type="button" class="btn btn-info" id="test-api-connection">
                                                 <i class="fa fa-plug"></i> <?php echo _l('zra_test_connection'); ?>
+                                            </button>
+                                            <button type="button" class="btn btn-success" id="initialize-device">
+                                                <i class="fa fa-cog"></i> <?php echo _l('zra_initialize_device'); ?>
                                             </button>
                                         </div>
                                     </div>
@@ -216,6 +214,31 @@ $(document).ready(function() {
                 alert_float('success', '<?php echo _l("zra_connection_successful"); ?>');
             } else {
                 alert_float('danger', '<?php echo _l("zra_connection_failed"); ?>: ' + data.message);
+            }
+        })
+        .fail(function() {
+            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>');
+        })
+        .always(function() {
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        });
+    });
+
+    $('#initialize-device').on('click', function() {
+        var btn = $(this);
+        var originalText = btn.html();
+
+        btn.html('<i class="fa fa-spinner fa-spin"></i> <?php echo _l("testing"); ?>...');
+        btn.prop('disabled', true);
+
+        $.post('<?php echo admin_url("zra_martin_invoicing/initialize_device"); ?>')
+        .done(function(response) {
+            var data = JSON.parse(response);
+            if (data.success) {
+                alert_float('success', '<?php echo _l("zra_device_initialization_successful"); ?>');
+            } else {
+                alert_float('danger', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + data.message);
             }
         })
         .fail(function() {

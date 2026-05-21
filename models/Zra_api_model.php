@@ -7,8 +7,7 @@ class Zra_api_model extends CI_Model
     private $api_url;
     private $company_tin;
     private $branch_id;
-    private $company_name;
-    private $security_key;
+    private $device_serial;
     private $timeout;
     private $debug_mode;
     private $success_code;
@@ -25,8 +24,7 @@ class Zra_api_model extends CI_Model
         $this->api_url = get_option('zra_api_url') ?: 'https://localhost:8080/zravsdc';
         $this->company_tin = get_option('zra_company_tin'); // TPIN (VARCHAR 10)
         $this->branch_id = get_option('zra_branch_id') ?: '000'; // bhfId (VARCHAR 3) - Supplied by ZRA at registration
-        $this->company_name = get_option('zra_company_name');
-        $this->security_key = get_option('zra_security_key'); // API keys retrieved during device initialization
+        $this->device_serial = get_option('zra_device_serial');
         $this->timeout = get_option('zra_timeout') ?: 30;
         $this->debug_mode = get_option('zra_debug_mode') == '1';
         
@@ -119,13 +117,35 @@ class Zra_api_model extends CI_Model
 
     public function test_api_connection()
     {
-        $test_data = [
-            'COMPANY_TIN' => $this->company_tin,
-            'COMPANY_NAMES' => $this->company_name,
-            'COMPANY_SECURITY_KEY' => $this->security_key
+        return $this->initialize_device();
+    }
+
+    public function initialize_device()
+    {
+        if (!get_option('zra_enabled')) {
+            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+        }
+
+        if (empty($this->company_tin) || empty($this->branch_id) || empty($this->device_serial)) {
+            return [
+                'success' => false,
+                'message' => 'Device initialization requires TPIN, branch ID, and device serial number'
+            ];
+        }
+
+        $init_data = [
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id,
+            'dvcSrlNo' => $this->device_serial
         ];
-        
-        return $this->call_api('/api/health', $test_data);
+
+        $response = $this->call_api('/initializer/selectInitInfo', $init_data);
+
+        if ($response['success']) {
+            update_option('zra_device_initialized', '1');
+        }
+
+        return $response;
     }
 
     /**
@@ -234,7 +254,7 @@ class Zra_api_model extends CI_Model
         $request_data = array_merge([
             'tpin' => $this->company_tin,
             'bhfId' => $this->branch_id,
-            'orgSdcId' => '000', // Original SDC ID
+            'orgSdcId' => null, // Original SDC ID - only used for credit/debit notes
             'orgInvcNo' => null, // Original invoice number for debit/credit notes
             'cisInvcNo' => $invoice->number,
             'custTpin' => $client->vat ?? '', // Customer TIN if available
@@ -268,7 +288,7 @@ class Zra_api_model extends CI_Model
             'exchangeRt' => '1', // Exchange rate
             'destnCountryCd' => '', // Destination country code
             'dbtRsnCd' => null, // Debit reason code
-            'invcAdjust' => null, // Invoice adjustment reason
+            'invcAdjustReason' => null, // Invoice adjustment reason
             'itemList' => $invoice_items
         ], $tax_totals, $tax_rates);
 
@@ -278,9 +298,8 @@ class Zra_api_model extends CI_Model
     private function prepare_refund_data($refund_data, $original_log)
     {
         return [
-            'COMPANY_TIN' => $this->company_tin,
-            'COMPANY_NAMES' => $this->company_name,
-            'COMPANY_SECURITY_KEY' => $this->security_key,
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id,
             'REFUND_ID' => $refund_data['reference'],
             'ORIGINAL_INVOICE_NUMBER' => $original_log->zra_invoice_number,
             'REFUND_DATE' => date('Y-m-d'),
@@ -477,9 +496,8 @@ class Zra_api_model extends CI_Model
         }
 
         $fetch_data = [
-            'COMPANY_TIN' => $this->company_tin,
-            'COMPANY_NAMES' => $this->company_name,
-            'COMPANY_SECURITY_KEY' => $this->security_key,
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id,
             'INVOICE_REFERENCE' => $invoice_reference
         ];
         

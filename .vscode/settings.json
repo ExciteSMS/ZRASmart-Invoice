@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd /workspaces/ZRASmart-Invoice && python3 - <<'PY'\nimport sys\ntry:\n    from PyPDF2 import PdfReader\nexcept Exception as e:\n    print\\('PyPDF2_missing', e\\)\n    sys\\.exit\\(1\\)\nreader = PdfReader\\('/tmp/VSDC-API-Specification-Document-v1\\.0\\.7-1\\.pdf'\\)\ntext = ''\nfor i, page in enumerate\\(reader\\.pages\\):\n    text \\+= f'\\\\n---PAGE \\{i\\+1\\}---\\\\n'\n    text \\+= page\\.extract_text\\(\\) or ''\nopen\\('/tmp/vsdc_spec\\.txt', 'w', encoding='utf-8'\\)\\.write\\(text\\)\nprint\\('pages', len\\(reader\\.pages\\)\\)\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd /workspaces/ZRASmart-Invoice && python3 - <<'PY'\nfrom PyPDF2 import PdfReader\nreader = PdfReader\\('/tmp/VSDC-API-Specification-Document-v1\\.0\\.7-1\\.pdf'\\)\ntext = ''\nfor i, page in enumerate\\(reader\\.pages\\):\n    text \\+= f'\\\\n---PAGE \\{i\\+1\\}---\\\\n'\n    page_text = page\\.extract_text\\(\\)\n    if page_text:\n        text \\+= page_text\n    else:\n        text \\+= '\\[NO_TEXT\\]'\nopen\\('/tmp/vsdc_spec\\.txt','w',encoding='utf-8'\\)\\.write\\(text\\)\nprint\\('pages', len\\(reader\\.pages\\)\\)\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

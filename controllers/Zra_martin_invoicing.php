@@ -102,6 +102,16 @@ class Zra_martin_invoicing extends AdminController
         echo json_encode($result);
     }
 
+    public function initialize_device()
+    {
+        if (!has_permission('zra_invoicing', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $result = $this->zra_api_model->initialize_device();
+        echo json_encode($result);
+    }
+
     public function get_invoice_status($invoice_id)
     {
         if (!has_permission('zra_invoicing', '', 'view')) {
@@ -212,8 +222,7 @@ class Zra_martin_invoicing extends AdminController
             'zra_api_url',
             'zra_company_tin',
             'zra_branch_id',
-            'zra_company_name',
-            'zra_security_key',
+            'zra_device_serial',
             'zra_auto_submit_invoices',
             'zra_tax_rate_standard',
             'zra_tax_rate_zero',

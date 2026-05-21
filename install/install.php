@@ -46,8 +46,9 @@ add_option('zra_enabled', '0');
 add_option('zra_environment', 'test'); // test or production
 add_option('zra_api_url', 'https://localhost:8080/zrasandboxvsdc');
 add_option('zra_company_tin', '');
-add_option('zra_company_name', '');
-add_option('zra_security_key', '');
+add_option('zra_branch_id', '000');
+add_option('zra_device_serial', '');
+add_option('zra_device_initialized', '0');
 add_option('zra_auto_submit_invoices', '0');
 add_option('zra_tax_rate_standard', '16');
 add_option('zra_tax_rate_zero', '0');
