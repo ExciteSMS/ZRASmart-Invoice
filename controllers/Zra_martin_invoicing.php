@@ -99,7 +99,7 @@ class Zra_martin_invoicing extends AdminController
         }
 
         $result = $this->zra_api_model->test_api_connection();
-        
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode($result);
     }
 
@@ -131,6 +131,7 @@ class Zra_martin_invoicing extends AdminController
         // Use model helper to insert into logs table
         $this->zra_api_model->log_transaction($log_data);
 
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode($result);
     }
 

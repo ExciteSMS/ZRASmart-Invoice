@@ -405,7 +405,8 @@ class Zra_api_model extends CI_Model
                 'success' => false,
                 'message' => 'HTTP error: ' . $http_code,
                 'error_code' => 'HTTP_' . $http_code,
-                'resultCd' => '998'
+                'resultCd' => '998',
+                'raw_response' => $response
             ];
         }
         
@@ -416,7 +417,8 @@ class Zra_api_model extends CI_Model
                 'success' => false,
                 'message' => 'Invalid JSON response',
                 'error_code' => 'JSON_ERROR',
-                'resultCd' => '997'
+                'resultCd' => '997',
+                'raw_response' => $response
             ];
         }
         
