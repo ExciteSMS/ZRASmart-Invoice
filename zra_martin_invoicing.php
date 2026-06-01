@@ -14,15 +14,15 @@ define('ZRA_MARTIN_INVOICING_MODULE_NAME', 'zra_martin_invoicing');
 define('ZRA_MARTIN_INVOICING_PATH', 'modules/zra_martin_invoicing/');
 
 // Module activation hook
-register_activation_hook(ZRA_MARTIN_INVOICING_MODULE_NAME, 'zra_martin_invoicing_activation_hook');
+// register_activation_hook(ZRA_MARTIN_INVOICING_MODULE_NAME, 'zra_martin_invoicing_activation_hook');
 
-function zra_martin_invoicing_activation_hook()
-{
-    $CI = &get_instance();
-    
-    // Create necessary database tables
-    require_once(__DIR__ . '/install/install.php');
-}
+// function zra_martin_invoicing_activation_hook()
+// {
+//     $CI = &get_instance();
+//     
+//     // Create necessary database tables
+//     require_once(__DIR__ . '/install/install.php');
+// }
 
 // Module deactivation hook
 register_deactivation_hook(ZRA_MARTIN_INVOICING_MODULE_NAME, 'zra_martin_invoicing_deactivation_hook');
