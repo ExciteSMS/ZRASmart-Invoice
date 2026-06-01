@@ -76,23 +76,42 @@ function zraExecutePost(url, btn, loadingText, successText, errorText) {
     zraSetInitializeStatus('loading', loadingText);
     zraSetButtonLoading(btn, loadingText);
 
+    var body = new URLSearchParams();
+    if (zraSettingsConfig.csrfTokenName && zraSettingsConfig.csrfHash) {
+        body.append(zraSettingsConfig.csrfTokenName, zraSettingsConfig.csrfHash);
+    }
+
     fetch(url, {
         method: 'POST',
         credentials: 'same-origin',
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
-        }
+        },
+        body: body
     })
     .then(function(response) {
-        return response.text();
+        return response.text().then(function(text) {
+            return { status: response.status, statusText: response.statusText, text: text };
+        });
     })
-    .then(function(text) {
+    .then(function(result) {
         if (typeof console !== 'undefined') {
-            console.log('zra response', text);
+            console.log('zra response', result.status, result.statusText, result.text);
         }
 
-        var data = zraParseResponseText(text);
+        if (result.status !== 200) {
+            var data = zraParseResponseText(result.text);
+            data.message = data.message || 'HTTP ' + result.status + ' ' + result.statusText;
+            data.raw = result.text;
+            return Promise.reject(data);
+        }
+
+        var data = zraParseResponseText(result.text);
+        if (data.csrfTokenName && data.csrfHash) {
+            zraSettingsConfig.csrfTokenName = data.csrfTokenName;
+            zraSettingsConfig.csrfHash = data.csrfHash;
+        }
         if (data.success) {
             zraSetInitializeStatus('success', successText);
             if (typeof alert_float !== 'undefined') {

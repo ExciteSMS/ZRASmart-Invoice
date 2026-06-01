@@ -220,7 +220,9 @@
         connectionSuccessfulText: '<?php echo _l("zra_connection_successful"); ?>',
         connectionFailedText: '<?php echo _l("zra_connection_failed"); ?>',
         initializeSuccessfulText: '<?php echo _l("zra_device_initialization_successful"); ?>',
-        initializeFailedText: '<?php echo _l("zra_device_initialization_failed"); ?>'
+        initializeFailedText: '<?php echo _l("zra_device_initialization_failed"); ?>',
+        csrfTokenName: '<?php echo $this->security->get_csrf_token_name(); ?>',
+        csrfHash: '<?php echo $this->security->get_csrf_hash(); ?>'
     };
 </script>
 <script src="<?php echo base_url('modules/zra_martin_invoicing/assets/js/zra_settings.js?v=' . filemtime(__DIR__ . '/../assets/js/zra_settings.js')); ?>"></script>

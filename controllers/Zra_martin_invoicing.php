@@ -99,6 +99,8 @@ class Zra_martin_invoicing extends AdminController
         }
 
         $result = $this->zra_api_model->test_api_connection();
+        $result['csrf_token_name'] = $this->security->get_csrf_token_name();
+        $result['csrf_hash'] = $this->security->get_csrf_hash();
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($result);
     }
@@ -131,6 +133,8 @@ class Zra_martin_invoicing extends AdminController
         // Use model helper to insert into logs table
         $this->zra_api_model->log_transaction($log_data);
 
+        $result['csrf_token_name'] = $this->security->get_csrf_token_name();
+        $result['csrf_hash'] = $this->security->get_csrf_hash();
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($result);
     }
