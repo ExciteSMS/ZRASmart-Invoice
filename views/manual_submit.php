@@ -133,9 +133,10 @@
     </div>
 </div>
 
-</script>
-<?php init_tail(); ?>
-<script src="<?php echo base_url('modules/zra_martin_invoicing/assets/js/manual_submit.js?v=' . filemtime(__DIR__ . '/../assets/js/manual_submit.js')); ?>"></script>
+<script>
+    window.zraManualSubmitConfig = {
+        submitInvoiceUrl: '<?php echo admin_url("zra_martin_invoicing/submit_invoice/"); ?>',
+        bulkSubmitUrl: '<?php echo admin_url("zra_martin_invoicing/bulk_submit"); ?>',
         selectedText: '<?php echo _l("selected"); ?>',
         submittingText: '<?php echo _l("submitting"); ?>',
         successSubmitText: '<?php echo _l("zra_invoice_submitted_successfully"); ?>',
