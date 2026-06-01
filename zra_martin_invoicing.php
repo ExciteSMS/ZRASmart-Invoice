@@ -5,9 +5,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: ZRA Martin Invoicing
 Description: Integration module for Zambia Revenue Authority (ZRA) Smart Invoice system
-Version: 1.0.0
+Version: 1.1.0
 Requires at least: 2.3.0
-Author: MiniMax Agent
+Author: Kazashim Kuzasuwat
 */
 
 define('ZRA_MARTIN_INVOICING_MODULE_NAME', 'zra_martin_invoicing');
