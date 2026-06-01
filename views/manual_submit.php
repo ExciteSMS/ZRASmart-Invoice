@@ -134,177 +134,24 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    // Master checkbox functionality
-    $('#master-checkbox').on('change', function() {
-        var isChecked = $(this).is(':checked');
-        $('.invoice-checkbox').prop('checked', isChecked);
-        updateBulkActions();
-    });
-    
-    // Individual checkbox functionality
-    $('.invoice-checkbox').on('change', function() {
-        updateBulkActions();
-        updateMasterCheckbox();
-    });
-    
-    // Select all button
-    $('#select-all').on('click', function() {
-        $('.invoice-checkbox').prop('checked', true);
-        $('#master-checkbox').prop('checked', true);
-        updateBulkActions();
-    });
-    
-    // Deselect all button
-    $('#deselect-all').on('click', function() {
-        $('.invoice-checkbox').prop('checked', false);
-        $('#master-checkbox').prop('checked', false);
-        updateBulkActions();
-    });
-    
-    // Submit single invoice
-    $('.submit-single').on('click', function() {
-        var invoiceId = $(this).data('invoice-id');
-        var btn = $(this);
-        var originalText = btn.html();
-        
-        btn.html('<i class="fa fa-spinner fa-spin"></i> <?php echo _l("submitting"); ?>...');
-        btn.prop('disabled', true);
-        
-        $.post('<?php echo admin_url("zra_martin_invoicing/submit_invoice/"); ?>' + invoiceId)
-        .done(function(response) {
-            var data = JSON.parse(response);
-            if (data.success) {
-                alert_float('success', '<?php echo _l("zra_invoice_submitted_successfully"); ?>');
-                // Remove row from table
-                btn.closest('tr').fadeOut(function() {
-                    $(this).remove();
-                    updateBulkActions();
-                    updateMasterCheckbox();
-                });
-            } else {
-                alert_float('danger', '<?php echo _l("zra_invoice_submission_failed"); ?>: ' + data.message);
-            }
-        })
-        .fail(function() {
-            alert_float('danger', '<?php echo _l("something_went_wrong"); ?>');
-        })
-        .always(function() {
-            btn.html(originalText);
-            btn.prop('disabled', false);
-        });
-    });
-    
-    // Bulk submit form
-    $('#manual-submit-form').on('submit', function(e) {
-        e.preventDefault();
-        
-        var selectedInvoices = $('.invoice-checkbox:checked');
-        if (selectedInvoices.length === 0) {
-            alert_float('warning', '<?php echo _l("zra_no_invoices_selected"); ?>');
-            return;
+    window.zraManualSubmitConfig = {
+        submitInvoiceUrl: '<?php echo admin_url("zra_martin_invoicing/submit_invoice/"); ?>',
+        bulkSubmitUrl: '<?php echo admin_url("zra_martin_invoicing/bulk_submit"); ?>',
+        selectedText: '<?php echo _l("selected"); ?>',
+        submittingText: '<?php echo _l("submitting"); ?>',
+        successSubmitText: '<?php echo _l("zra_invoice_submitted_successfully"); ?>',
+        failedSubmitText: '<?php echo _l("zra_invoice_submission_failed"); ?>',
+        successBulkText: '<?php echo _l("zra_invoices_submitted_successfully"); ?>',
+        failedBulkText: '<?php echo _l("zra_invoices_submission_failed"); ?>',
+        preparingSubmissionText: '<?php echo _l("zra_preparing_submission"); ?>',
+        processingInvoiceText: '<?php echo _l("zra_processing_invoice"); ?>',
+        ofText: '<?php echo _l("of"); ?>',
+        noInvoicesSelectedText: '<?php echo _l("zra_no_invoices_selected"); ?>',
+        csrfData: {
+            '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
         }
-        
-        var invoiceIds = [];
-        selectedInvoices.each(function() {
-            invoiceIds.push($(this).val());
-        });
-        
-        submitBulkInvoices(invoiceIds);
-    });
-    
-    // Refresh invoices
-    $('#refresh-invoices').on('click', function() {
-        location.reload();
-    });
-    
-    function updateBulkActions() {
-        var selectedCount = $('.invoice-checkbox:checked').length;
-        $('#bulk-submit-btn').prop('disabled', selectedCount === 0);
-        $('.selected-count').text('(' + selectedCount + ' <?php echo _l("selected"); ?>)');
-    }
-    
-    function updateMasterCheckbox() {
-        var totalCheckboxes = $('.invoice-checkbox').length;
-        var checkedCheckboxes = $('.invoice-checkbox:checked').length;
-        
-        if (checkedCheckboxes === 0) {
-            $('#master-checkbox').prop('indeterminate', false);
-            $('#master-checkbox').prop('checked', false);
-        } else if (checkedCheckboxes === totalCheckboxes) {
-            $('#master-checkbox').prop('indeterminate', false);
-            $('#master-checkbox').prop('checked', true);
-        } else {
-            $('#master-checkbox').prop('indeterminate', true);
-        }
-    }
-
-    // Initialize button state on page load
-    updateBulkActions();
-    updateMasterCheckbox();
-    
-    function submitBulkInvoices(invoiceIds) {
-        $('#progress-modal').modal('show');
-        
-        var totalInvoices = invoiceIds.length;
-        var processedInvoices = 0;
-        var successCount = 0;
-        var failedCount = 0;
-        
-        function processNextInvoice(index) {
-            if (index >= totalInvoices) {
-                // All invoices processed
-                $('#progress-modal').modal('hide');
-                
-                if (successCount > 0) {
-                    alert_float('success', successCount + ' <?php echo _l("zra_invoices_submitted_successfully"); ?>');
-                }
-                if (failedCount > 0) {
-                    alert_float('warning', failedCount + ' <?php echo _l("zra_invoices_submission_failed"); ?>');
-                }
-                
-                // Refresh the page after 2 seconds
-                setTimeout(function() {
-                    location.reload();
-                }, 2000);
-                
-                return;
-            }
-            
-            var invoiceId = invoiceIds[index];
-            var progress = Math.round(((index + 1) / totalInvoices) * 100);
-            
-            $('.progress-bar').css('width', progress + '%');
-            $('#progress-text').text('<?php echo _l("zra_processing_invoice"); ?> ' + (index + 1) + ' <?php echo _l("of"); ?> ' + totalInvoices);
-            
-            $.post('<?php echo admin_url("zra_martin_invoicing/submit_invoice/"); ?>' + invoiceId)
-            .done(function(response) {
-                var data = JSON.parse(response);
-                if (data.success) {
-                    successCount++;
-                    $('#progress-details').append('<div class="text-success"><i class="fa fa-check"></i> Invoice #' + invoiceId + ' - Success</div>');
-                } else {
-                    failedCount++;
-                    $('#progress-details').append('<div class="text-danger"><i class="fa fa-times"></i> Invoice #' + invoiceId + ' - ' + data.message + '</div>');
-                }
-            })
-            .fail(function() {
-                failedCount++;
-                $('#progress-details').append('<div class="text-danger"><i class="fa fa-times"></i> Invoice #' + invoiceId + ' - Connection Error</div>');
-            })
-            .always(function() {
-                processedInvoices++;
-                
-                // Wait 1 second before processing next invoice to avoid overwhelming the API
-                setTimeout(function() {
-                    processNextInvoice(index + 1);
-                }, 1000);
-            });
-        }
-        
-        processNextInvoice(0);
-    }
-});
+    };
 </script>
+<script src="<?php echo base_url('modules/zra_martin_invoicing/assets/js/manual_submit.js?v=' . filemtime(__DIR__ . '/../assets/js/manual_submit.js')); ?>"></script>
 
 <?php init_tail(); ?>
