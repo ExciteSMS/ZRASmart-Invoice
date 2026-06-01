@@ -236,6 +236,18 @@ class Zra_martin_invoicing extends AdminController
         echo json_encode(['success' => true, 'invoices' => $invoices]);
     }
 
+    public function latest_initialize_log()
+    {
+        if (!is_admin()) {
+            ajax_access_denied();
+        }
+
+        $logs = $this->zra_api_model->get_logs_by_type('initialize_device', 1);
+        $log = isset($logs[0]) ? $logs[0] : null;
+
+        echo json_encode(['success' => true, 'log' => $log]);
+    }
+
     private function handle_settings_post()
     {
         $settings = [

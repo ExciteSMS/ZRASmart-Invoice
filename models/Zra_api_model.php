@@ -600,6 +600,14 @@ class Zra_api_model extends CI_Model
         return $this->db->get()->result();
     }
 
+    public function get_logs_by_type($type, $limit = 10)
+    {
+        $this->db->where('request_type', $type);
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get(db_prefix() . 'zra_invoicing_logs')->result();
+    }
+
     public function bulk_submit_invoices($invoice_ids)
     {
         $results = [];
