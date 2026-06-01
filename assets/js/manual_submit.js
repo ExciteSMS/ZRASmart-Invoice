@@ -1,4 +1,4 @@
-(function() {
+(function($) {
     "use strict";
 
     function updateBulkActions() {
@@ -159,4 +159,4 @@
         updateBulkActions();
         updateMasterCheckbox();
     });
-})();
+})(jQuery);
