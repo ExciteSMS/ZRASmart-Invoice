@@ -27,6 +27,11 @@
         var invoiceId = btn.data('invoice-id');
         var originalHtml = btn.html();
 
+        // Confirmation before single invoice submit
+        if (!window.confirm(window.zraManualSubmitConfig.confirmSingleSubmitText || ('Are you sure you want to submit invoice #' + invoiceId + '?'))) {
+            return;
+        }
+
         btn.html('<i class="fa fa-spinner fa-spin"></i> ' + window.zraManualSubmitConfig.submittingText + '...');
         btn.prop('disabled', true);
 
@@ -49,7 +54,15 @@
                 }
             },
             error: function(xhr) {
-                alert_float('danger', window.zraManualSubmitConfig.failedSubmitText + ': ' + xhr.statusText);
+                var errMsg = window.zraManualSubmitConfig.failedSubmitText + ': ' + xhr.statusText;
+                console.error('Single invoice submit error:', xhr);
+                alert_float('danger', errMsg);
+                // Append error to progress details if modal is shown
+                try {
+                    $('#progress-details').append('<div class="text-danger"><i class="fa fa-exclamation-triangle"></i> Invoice #' + invoiceId + ' - ' + errMsg + '</div>');
+                } catch (e) {
+                    console.error('Error appending to progress details:', e);
+                }
             },
             complete: function() {
                 btn.html(originalHtml);
@@ -67,6 +80,11 @@
 
         if (invoiceIds.length === 0) {
             alert_float('warning', window.zraManualSubmitConfig.noInvoicesSelectedText);
+            return;
+        }
+
+        // Confirmation before bulk submit
+        if (!window.confirm(window.zraManualSubmitConfig.confirmBulkSubmitText || ('Are you sure you want to submit ' + invoiceIds.length + ' invoices?'))) {
             return;
         }
 
@@ -119,7 +137,14 @@
             },
             error: function(xhr) {
                 $('#progress-modal').modal('hide');
-                alert_float('danger', window.zraManualSubmitConfig.failedSubmitText + ': ' + xhr.statusText);
+                var errMsg = window.zraManualSubmitConfig.failedSubmitText + ': ' + xhr.statusText;
+                console.error('Bulk submit error:', xhr);
+                alert_float('danger', errMsg);
+                try {
+                    $('#progress-details').append('<div class="text-danger"><i class="fa fa-exclamation-triangle"></i> Bulk submit error - ' + errMsg + '</div>');
+                } catch (e) {
+                    console.error('Error appending bulk error to progress details:', e);
+                }
             }
         });
     }

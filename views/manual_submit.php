@@ -145,6 +145,8 @@
         preparingSubmissionText: '<?php echo _l("zra_preparing_submission"); ?>',
         processingInvoiceText: '<?php echo _l("zra_processing_invoice"); ?>',
         ofText: '<?php echo _l("of"); ?>',
+        confirmSingleSubmitText: '<?php echo _l("zra_confirm_submit_invoice") ?: "Are you sure you want to submit this invoice?"; ?>',
+        confirmBulkSubmitText: '<?php echo _l("zra_confirm_submit_invoices") ?: "Are you sure you want to submit the selected invoices?"; ?>',
         noInvoicesSelectedText: '<?php echo _l("zra_no_invoices_selected"); ?>',
         csrfData: {
             '<?php echo $this->security->get_csrf_token_name(); ?>': '<?php echo $this->security->get_csrf_hash(); ?>'
