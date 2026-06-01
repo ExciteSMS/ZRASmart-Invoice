@@ -144,10 +144,10 @@
                                         </div>
                                         
                                         <div class="form-group">
-                                            <button type="button" class="btn btn-info" id="test-api-connection" onclick="zra_test_connection();">
+                                            <button type="button" class="btn btn-info" id="test-api-connection">
                                                 <i class="fa fa-plug"></i> <?php echo _l('zra_test_connection'); ?>
                                             </button>
-                                            <button type="button" class="btn btn-success" id="initialize-device" onclick="zra_initialize_device();">
+                                            <button type="button" class="btn btn-success" id="initialize-device">
                                                 <i class="fa fa-cog"></i> <?php echo _l('zra_initialize_device'); ?>
                                             </button>
                                         </div>
@@ -214,115 +214,129 @@
 </div>
 
 <script>
+function setInitializeStatus(type, text) {
+    var statusContainer = $('#zra-initialize-status-container');
+    var statusText = $('#zra-initialize-status-text');
+    var status = $('#zra-initialize-status');
+
+    statusContainer.show();
+    status.removeClass('text-success text-danger text-muted');
+
+    if (type === 'loading') {
+        status.addClass('text-muted');
+        status.html('<i class="fa fa-spinner fa-spin"></i> ' + text);
+    } else if (type === 'success') {
+        status.addClass('text-success');
+        status.html('<i class="fa fa-check"></i> ' + text);
+    } else if (type === 'error') {
+        status.addClass('text-danger');
+        status.html('<i class="fa fa-times"></i> ' + text);
+    }
+}
+
+function zra_test_connection() {
+    if (typeof console !== 'undefined') {
+        console.log('zra_test_connection called');
+    }
+
+    var btn = $('#test-api-connection');
+    var originalText = btn.html();
+
+    setInitializeStatus('loading', 'Testing connection...');
+    btn.html('<i class="fa fa-spinner fa-spin"></i> <?php echo _l("testing"); ?>...');
+    btn.prop('disabled', true);
+
+    $.post('<?php echo admin_url("zra_martin_invoicing/test_connection"); ?>')
+    .done(function(response) {
+        var data;
+        try {
+            data = JSON.parse(response);
+        } catch (e) {
+            setInitializeStatus('error', 'Invalid response from server');
+            alert_float('danger', 'Invalid response: ' + response);
+            return;
+        }
+
+        if (data.success) {
+            setInitializeStatus('success', '<?php echo _l("zra_connection_successful"); ?>');
+            alert_float('success', '<?php echo _l("zra_connection_successful"); ?>');
+        } else {
+            setInitializeStatus('error', '<?php echo _l("zra_connection_failed"); ?>: ' + (data.message || 'Unknown error'));
+            alert_float('danger', '<?php echo _l("zra_connection_failed"); ?>: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        setInitializeStatus('error', '<?php echo _l("zra_connection_error"); ?>');
+        alert_float('danger', '<?php echo _l("zra_connection_error"); ?>: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText);
+    })
+    .always(function() {
+        btn.html(originalText);
+        btn.prop('disabled', false);
+    });
+}
+
+function zra_initialize_device() {
+    if (typeof console !== 'undefined') {
+        console.log('zra_initialize_device called');
+    }
+
+    var btn = $('#initialize-device');
+    var originalText = btn.html();
+
+    setInitializeStatus('loading', 'Initializing device...');
+    btn.html('<i class="fa fa-spinner fa-spin"></i> Initializing device...');
+    btn.prop('disabled', true);
+
+    $.post('<?php echo admin_url("zra_martin_invoicing/initialize_device"); ?>')
+    .done(function(response) {
+        var data;
+        try {
+            data = JSON.parse(response);
+        } catch (e) {
+            setInitializeStatus('error', 'Invalid response from server');
+            alert_float('danger', 'Invalid response: ' + response);
+            return;
+        }
+
+        if (data.success) {
+            setInitializeStatus('success', '<?php echo _l("zra_device_initialization_successful"); ?>');
+            alert_float('success', '<?php echo _l("zra_device_initialization_successful"); ?>');
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+        } else {
+            setInitializeStatus('error', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + (data.message || 'Unknown error'));
+            alert_float('danger', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        setInitializeStatus('error', '<?php echo _l("zra_connection_error"); ?>');
+        alert_float('danger', '<?php echo _l("zra_connection_error"); ?>: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText);
+    })
+    .always(function() {
+        btn.html(originalText);
+        btn.prop('disabled', false);
+    });
+}
+
 $(document).ready(function() {
     if (typeof console !== 'undefined') {
         console.log('ZRA settings script loaded');
     }
 
-    function setInitializeStatus(type, text) {
-        var statusContainer = $('#zra-initialize-status-container');
-        var statusText = $('#zra-initialize-status-text');
-        var status = $('#zra-initialize-status');
-
-        statusContainer.show();
-        status.removeClass('text-success text-danger text-muted');
-
-        if (type === 'loading') {
-            status.addClass('text-muted');
-            status.html('<i class="fa fa-spinner fa-spin"></i> ' + text);
-        } else if (type === 'success') {
-            status.addClass('text-success');
-            status.html('<i class="fa fa-check"></i> ' + text);
-        } else if (type === 'error') {
-            status.addClass('text-danger');
-            status.html('<i class="fa fa-times"></i> ' + text);
-        }
-    }
-
-    window.zra_test_connection = function() {
+    $('#test-api-connection').on('click', function() {
         if (typeof console !== 'undefined') {
-            console.log('zra_test_connection called');
+            console.log('test-api-connection clicked');
         }
+        zra_test_connection();
+    });
 
-        var btn = $('#test-api-connection');
-        var originalText = btn.html();
-
-        setInitializeStatus('loading', 'Testing connection...');
-        btn.html('<i class="fa fa-spinner fa-spin"></i> <?php echo _l("testing"); ?>...');
-        btn.prop('disabled', true);
-
-        $.post('<?php echo admin_url("zra_martin_invoicing/test_connection"); ?>')
-        .done(function(response) {
-            var data;
-            try {
-                data = JSON.parse(response);
-            } catch (e) {
-                setInitializeStatus('error', 'Invalid response from server');
-                alert_float('danger', 'Invalid response: ' + response);
-                return;
-            }
-
-            if (data.success) {
-                setInitializeStatus('success', '<?php echo _l("zra_connection_successful"); ?>');
-                alert_float('success', '<?php echo _l("zra_connection_successful"); ?>');
-            } else {
-                setInitializeStatus('error', '<?php echo _l("zra_connection_failed"); ?>: ' + (data.message || 'Unknown error'));
-                alert_float('danger', '<?php echo _l("zra_connection_failed"); ?>: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            setInitializeStatus('error', '<?php echo _l("zra_connection_error"); ?>');
-            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText);
-        })
-        .always(function() {
-            btn.html(originalText);
-            btn.prop('disabled', false);
-        });
-    };
-
-    window.zra_initialize_device = function() {
+    $('#initialize-device').on('click', function() {
         if (typeof console !== 'undefined') {
-            console.log('zra_initialize_device called');
+            console.log('initialize-device clicked');
         }
-
-        var btn = $('#initialize-device');
-        var originalText = btn.html();
-
-        setInitializeStatus('loading', 'Initializing device...');
-        btn.html('<i class="fa fa-spinner fa-spin"></i> Initializing device...');
-        btn.prop('disabled', true);
-
-        $.post('<?php echo admin_url("zra_martin_invoicing/initialize_device"); ?>')
-        .done(function(response) {
-            var data;
-            try {
-                data = JSON.parse(response);
-            } catch (e) {
-                setInitializeStatus('error', 'Invalid response from server');
-                alert_float('danger', 'Invalid response: ' + response);
-                return;
-            }
-
-            if (data.success) {
-                setInitializeStatus('success', '<?php echo _l("zra_device_initialization_successful"); ?>');
-                alert_float('success', '<?php echo _l("zra_device_initialization_successful"); ?>');
-                setTimeout(function() {
-                    location.reload();
-                }, 1500);
-            } else {
-                setInitializeStatus('error', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + (data.message || 'Unknown error'));
-                alert_float('danger', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            setInitializeStatus('error', '<?php echo _l("zra_connection_error"); ?>');
-            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText);
-        })
-        .always(function() {
-            btn.html(originalText);
-            btn.prop('disabled', false);
-        });
-    };
+        zra_initialize_device();
+    });
 });
 </script>
 
