@@ -218,15 +218,22 @@ $(document).ready(function() {
         
         $.post('<?php echo admin_url("zra_martin_invoicing/test_connection"); ?>')
         .done(function(response) {
-            var data = JSON.parse(response);
+            var data;
+            try {
+                data = JSON.parse(response);
+            } catch (e) {
+                alert_float('danger', 'Invalid response: ' + response);
+                return;
+            }
+
             if (data.success) {
                 alert_float('success', '<?php echo _l("zra_connection_successful"); ?>');
             } else {
-                alert_float('danger', '<?php echo _l("zra_connection_failed"); ?>: ' + data.message);
+                alert_float('danger', '<?php echo _l("zra_connection_failed"); ?>: ' + (data.message || JSON.stringify(data)));
             }
         })
-        .fail(function() {
-            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>');
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText);
         })
         .always(function() {
             btn.html(originalText);
@@ -243,15 +250,22 @@ $(document).ready(function() {
 
         $.post('<?php echo admin_url("zra_martin_invoicing/initialize_device"); ?>')
         .done(function(response) {
-            var data = JSON.parse(response);
+            var data;
+            try {
+                data = JSON.parse(response);
+            } catch (e) {
+                alert_float('danger', 'Invalid response: ' + response);
+                return;
+            }
+
             if (data.success) {
                 alert_float('success', '<?php echo _l("zra_device_initialization_successful"); ?>');
             } else {
-                alert_float('danger', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + data.message);
+                alert_float('danger', '<?php echo _l("zra_device_initialization_failed"); ?>: ' + (data.message || JSON.stringify(data)));
             }
         })
-        .fail(function() {
-            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>');
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            alert_float('danger', '<?php echo _l("zra_connection_error"); ?>: ' + textStatus + ' ' + errorThrown + '\n' + jqXHR.responseText);
         })
         .always(function() {
             btn.html(originalText);

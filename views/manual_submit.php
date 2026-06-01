@@ -234,10 +234,6 @@ $(document).ready(function() {
         } else if (checkedCheckboxes === totalCheckboxes) {
             $('#master-checkbox').prop('indeterminate', false);
             $('#master-checkbox').prop('checked', true);
-
-    // Initialize button state on page load
-    updateBulkActions();
-    updateMasterCheckbox();
         } else {
             $('#master-checkbox').prop('indeterminate', true);
         }
