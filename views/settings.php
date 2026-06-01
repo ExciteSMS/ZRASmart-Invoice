@@ -144,10 +144,10 @@
                                         </div>
                                         
                                         <div class="form-group">
-                                            <button type="button" class="btn btn-info" id="test-api-connection">
+                                            <button type="button" class="btn btn-info" id="test-api-connection" onclick="zra_test_connection();">
                                                 <i class="fa fa-plug"></i> <?php echo _l('zra_test_connection'); ?>
                                             </button>
-                                            <button type="button" class="btn btn-success" id="initialize-device">
+                                            <button type="button" class="btn btn-success" id="initialize-device" onclick="zra_initialize_device();">
                                                 <i class="fa fa-cog"></i> <?php echo _l('zra_initialize_device'); ?>
                                             </button>
                                         </div>
@@ -215,6 +215,10 @@
 
 <script>
 $(document).ready(function() {
+    if (typeof console !== 'undefined') {
+        console.log('ZRA settings script loaded');
+    }
+
     function setInitializeStatus(type, text) {
         var statusContainer = $('#zra-initialize-status-container');
         var statusText = $('#zra-initialize-status-text');
@@ -235,8 +239,12 @@ $(document).ready(function() {
         }
     }
 
-    $('#test-api-connection').on('click', function() {
-        var btn = $(this);
+    window.zra_test_connection = function() {
+        if (typeof console !== 'undefined') {
+            console.log('zra_test_connection called');
+        }
+
+        var btn = $('#test-api-connection');
         var originalText = btn.html();
 
         setInitializeStatus('loading', 'Testing connection...');
@@ -270,10 +278,14 @@ $(document).ready(function() {
             btn.html(originalText);
             btn.prop('disabled', false);
         });
-    });
+    };
 
-    $('#initialize-device').on('click', function() {
-        var btn = $(this);
+    window.zra_initialize_device = function() {
+        if (typeof console !== 'undefined') {
+            console.log('zra_initialize_device called');
+        }
+
+        var btn = $('#initialize-device');
         var originalText = btn.html();
 
         setInitializeStatus('loading', 'Initializing device...');
@@ -310,7 +322,7 @@ $(document).ready(function() {
             btn.html(originalText);
             btn.prop('disabled', false);
         });
-    });
+    };
 });
 </script>
 
