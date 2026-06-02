@@ -16,6 +16,7 @@ class Zra_api_model extends CI_Model
     {
         parent::__construct();
         $this->load_configuration();
+        $this->ensure_log_table_exists();
     }
 
     private function load_configuration()
@@ -468,6 +469,62 @@ class Zra_api_model extends CI_Model
     private function log_table_exists()
     {
         return $this->db->table_exists(db_prefix() . 'zra_invoicing_logs');
+    }
+
+    private function ensure_log_table_exists()
+    {
+        $table = db_prefix() . 'zra_invoicing_logs';
+
+        if ($this->db->table_exists($table)) {
+            $this->ensure_log_table_columns($table);
+            return true;
+        }
+
+        $sql = 'CREATE TABLE `' . $table . '` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `invoice_id` int(11) NOT NULL,
+            `request_type` varchar(50) NOT NULL,
+            `request_data` longtext,
+            `response_data` longtext,
+            `status` varchar(20) NOT NULL DEFAULT "pending",
+            `error_code` varchar(10) NULL,
+            `error_message` text NULL,
+            `zra_invoice_number` varchar(100) NULL,
+            `qr_code` text NULL,
+            `fiscal_tax_id` varchar(100) NULL,
+            `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `invoice_id` (`invoice_id`),
+            KEY `status` (`status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;';
+
+        $this->db->query($sql);
+        return $this->db->table_exists($table);
+    }
+
+    private function ensure_log_table_columns($table)
+    {
+        $columns = [
+            'invoice_id' => 'int(11) NOT NULL',
+            'request_type' => 'varchar(50) NOT NULL',
+            'request_data' => 'longtext',
+            'response_data' => 'longtext',
+            'status' => 'varchar(20) NOT NULL DEFAULT "pending"',
+            'error_code' => 'varchar(10) NULL',
+            'error_message' => 'text NULL',
+            'zra_invoice_number' => 'varchar(100) NULL',
+            'qr_code' => 'text NULL',
+            'fiscal_tax_id' => 'varchar(100) NULL',
+            'created_at' => 'datetime NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            'updated_at' => 'datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        ];
+
+        foreach ($columns as $field => $definition) {
+            if (!$this->db->field_exists($field, $table)) {
+                $this->db->query('ALTER TABLE `' . $table . '` ADD COLUMN `' . $field . '` ' . $definition);
+            }
+        }
     }
 
     public function log_transaction($data)
