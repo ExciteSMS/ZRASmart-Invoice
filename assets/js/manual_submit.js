@@ -59,12 +59,24 @@
                         alert_float('danger', (window.zraManualSubmitConfig && window.zraManualSubmitConfig.failedSubmitText ? window.zraManualSubmitConfig.failedSubmitText : 'Submission failed') + ': ' + message);
                     }
                 },
-                error: function(xhr) {
-                    var errMsg = (window.zraManualSubmitConfig && window.zraManualSubmitConfig.failedSubmitText ? window.zraManualSubmitConfig.failedSubmitText : 'Submission failed') + ': ' + xhr.statusText;
-                    console.error('Single invoice submit error:', xhr);
+                error: function(xhr, status, errorThrown) {
+                    var baseMsg = (window.zraManualSubmitConfig && window.zraManualSubmitConfig.failedSubmitText ? window.zraManualSubmitConfig.failedSubmitText : 'Submission failed');
+                    var errMsg = baseMsg + ': ' + (xhr.statusText || status || errorThrown || 'Unknown error');
+                    console.error('Single invoice submit error:', {
+                        url: (window.zraManualSubmitConfig && window.zraManualSubmitConfig.submitInvoiceUrl ? window.zraManualSubmitConfig.submitInvoiceUrl : '') + invoiceId,
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        error: errorThrown,
+                        responseText: xhr.responseText,
+                        xhr: xhr
+                    });
                     alert_float('danger', errMsg);
                     try {
-                        $('#progress-details').append('<div class="text-danger"><i class="fa fa-exclamation-triangle"></i> Invoice #' + invoiceId + ' - ' + errMsg + '</div>');
+                        var detailText = 'Invoice #' + invoiceId + ' - ' + errMsg;
+                        if (xhr.responseText) {
+                            detailText += '<br><small>' + $('<div>').text(xhr.responseText).html().slice(0, 300) + '</small>';
+                        }
+                        $('#progress-details').append('<div class="text-danger"><i class="fa fa-exclamation-triangle"></i> ' + detailText + '</div>');
                     } catch (e) {
                         console.error('Error appending to progress details:', e);
                     }
@@ -147,13 +159,25 @@
                         location.reload();
                     }, 2000);
                 },
-                error: function(xhr) {
+                error: function(xhr, status, errorThrown) {
                     $('#progress-modal').modal('hide');
-                    var errMsg = window.zraManualSubmitConfig.failedSubmitText + ': ' + xhr.statusText;
-                    console.error('Bulk submit error:', xhr);
+                    var baseMsg = window.zraManualSubmitConfig.failedSubmitText || 'Bulk submission failed';
+                    var errMsg = baseMsg + ': ' + (xhr.statusText || status || errorThrown || 'Unknown error');
+                    console.error('Bulk submit error:', {
+                        url: window.zraManualSubmitConfig.bulkSubmitUrl,
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        error: errorThrown,
+                        responseText: xhr.responseText,
+                        xhr: xhr
+                    });
                     alert_float('danger', errMsg);
                     try {
-                        $('#progress-details').append('<div class="text-danger"><i class="fa fa-exclamation-triangle"></i> Bulk submit error - ' + errMsg + '</div>');
+                        var detailText = 'Bulk submit error - ' + errMsg;
+                        if (xhr.responseText) {
+                            detailText += '<br><small>' + $('<div>').text(xhr.responseText).html().slice(0, 300) + '</small>';
+                        }
+                        $('#progress-details').append('<div class="text-danger"><i class="fa fa-exclamation-triangle"></i> ' + detailText + '</div>');
                     } catch (e) {
                         console.error('Error appending bulk error to progress details:', e);
                     }

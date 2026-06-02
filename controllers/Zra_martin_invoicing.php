@@ -69,6 +69,9 @@ class Zra_martin_invoicing extends AdminController
     public function submit_invoice($invoice_id = null)
     {
         if (!has_permission('zra_invoicing', '', 'create')) {
+            if ($this->input->is_ajax_request()) {
+                ajax_access_denied();
+            }
             access_denied('zra_invoicing');
         }
 
@@ -79,6 +82,7 @@ class Zra_martin_invoicing extends AdminController
         $result = $this->zra_api_model->submit_invoice($invoice_id);
         
         if ($this->input->is_ajax_request()) {
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode($result);
             return;
         }
@@ -159,12 +163,14 @@ class Zra_martin_invoicing extends AdminController
         $invoice_ids = $this->input->post('invoice_ids');
         
         if (empty($invoice_ids)) {
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['success' => false, 'message' => 'No invoices selected']);
             return;
         }
 
         $results = $this->zra_api_model->bulk_submit_invoices($invoice_ids);
 
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['success' => true, 'results' => $results]);
     }
 
