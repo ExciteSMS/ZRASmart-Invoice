@@ -237,7 +237,16 @@ class Zra_api_model extends CI_Model
         }
         
         // Get invoice items
-        $items = $this->invoices_model->get_invoice_items($invoice->id);
+        if (method_exists($this->invoices_model, 'get_invoice_items')) {
+            $items = $this->invoices_model->get_invoice_items($invoice->id);
+        } elseif (method_exists($this->invoices_model, 'get_items')) {
+            $items = $this->invoices_model->get_items($invoice->id);
+        } elseif (method_exists($this->invoices_model, 'get_items_by_invoice')) {
+            $items = $this->invoices_model->get_items_by_invoice($invoice->id);
+        } else {
+            $items = $this->get_invoice_items_by_query($invoice->id);
+        }
+
         if (!is_array($items)) {
             $items = [];
         }
@@ -373,6 +382,33 @@ class Zra_api_model extends CI_Model
         ], $tax_totals, $tax_rates);
 
         return $request_data;
+    }
+
+    private function get_invoice_items_by_query($invoice_id)
+    {
+        $possible_tables = [
+            db_prefix() . 'invoice_items',
+            db_prefix() . 'invoiceitems',
+            db_prefix() . 'tblinvoiceitems',
+            db_prefix() . 'tblinvoice_items',
+            db_prefix() . 'invoice_item'
+        ];
+
+        foreach ($possible_tables as $table) {
+            if ($this->db->table_exists($table)) {
+                $items = $this->db->select('description,qty,rate,tax')
+                    ->from($table)
+                    ->where('invoiceid', $invoice_id)
+                    ->get()
+                    ->result_array();
+
+                if (is_array($items)) {
+                    return $items;
+                }
+            }
+        }
+
+        return [];
     }
 
     private function prepare_refund_data($refund_data, $original_log)
