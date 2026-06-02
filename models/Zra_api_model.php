@@ -226,6 +226,8 @@ class Zra_api_model extends CI_Model
         ], $data);
 
         return $this->try_api_endpoints([
+            '/code/selectCodes',
+            '/itemClass/selectItemsClass',
             '/master/selectStdCodes',
             '/master/selectStandardCodes',
             '/codes/getStandardCodes'
@@ -244,6 +246,8 @@ class Zra_api_model extends CI_Model
         ], $data);
 
         return $this->try_api_endpoints([
+            '/itemClass/selectItemsClass',
+            '/code/selectCodes',
             '/master/selectItemClassificationCodes',
             '/items/selectItemClsCd',
             '/items/selectItemClassificationCodes'
@@ -263,6 +267,7 @@ class Zra_api_model extends CI_Model
 
         return $this->try_api_endpoints([
             '/imports/selectImportItems',
+            '/imports/selectImportItemsERPVSDC',
             '/imports/getImportItems',
             '/imports/selectImports'
         ], $payload);
@@ -280,6 +285,7 @@ class Zra_api_model extends CI_Model
         ], $data);
 
         return $this->try_api_endpoints([
+            '/trnsPurchase/selectTrnsPurchaseSales',
             '/trnsPurchases/selectPurchases',
             '/purchases/selectPurchases',
             '/trnsPurchases/getPurchaseList'
@@ -288,7 +294,10 @@ class Zra_api_model extends CI_Model
 
     public function save_purchase($data = [])
     {
-        return $this->call_api('/trnsPurchases/savePurchase', $data);
+        return $this->try_api_endpoints([
+            '/trnsPurchase/savePurchase',
+            '/trnsPurchases/savePurchase'
+        ], $data);
     }
 
     public function save_non_smart_supplier_purchase($data = [])
@@ -1222,7 +1231,10 @@ class Zra_api_model extends CI_Model
             'INVOICE_REFERENCE' => $invoice_reference
         ];
         
-        $response = $this->call_api('/trnsSales/getInvoiceStatus', $fetch_data);
+        $response = $this->try_api_endpoints([
+            '/trnsSales/selectInvoice',
+            '/trnsSales/getInvoiceStatus'
+        ], $fetch_data);
         
         // Log the fetch operation
         $log_data = [

@@ -136,7 +136,7 @@ The module automatically maps tax rates to ZRA tax codes:
 
 - `/trnsSales/saveSales` - Submit sales invoices
 - `/trnsSales/saveRefund` - Submit refunds
-- `/trnsSales/getInvoiceStatus` - Fetch invoice status and updates
+- `/trnsSales/selectInvoice` - Fetch invoice status and updates
 - `/api/health` - Test API connection
 
 ## Database Tables
