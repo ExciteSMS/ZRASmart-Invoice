@@ -187,10 +187,21 @@ class Zra_api_model extends CI_Model
         $this->load->model('clients_model');
         
         $client = $this->clients_model->get($invoice->clientid);
+        if (!$client) {
+            return ['success' => false, 'message' => 'Customer record not found for this invoice'];
+        }
+
         $currency = $this->currencies_model->get($invoice->currency);
+        if (!$currency) {
+            $base_currency = get_base_currency();
+            $currency = (object) ['name' => is_object($base_currency) ? $base_currency->name : ($base_currency ?: 'ZMW')];
+        }
         
         // Get invoice items
         $items = $this->invoices_model->get_invoice_items($invoice->id);
++        if (!is_array($items)) {
++            $items = [];
++        }
         
         $invoice_items = [];
         $item_sequence = 1;

@@ -79,7 +79,12 @@ class Zra_martin_invoicing extends AdminController
             show_404();
         }
 
-        $result = $this->zra_api_model->submit_invoice($invoice_id);
+        try {
+            $result = $this->zra_api_model->submit_invoice($invoice_id);
+        } catch (Exception $th) {
+            log_message('error', 'ZRA submit_invoice exception: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine());
+            $result = ['success' => false, 'message' => 'Internal server error while submitting invoice'];
+        }
         
         if ($this->input->is_ajax_request()) {
             header('Content-Type: application/json; charset=utf-8');
