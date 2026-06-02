@@ -576,6 +576,9 @@ class Zra_api_model extends CI_Model
         @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: no invoice item rows found in candidate tables, starting broad fallback search\n", FILE_APPEND);
 
         $all_tables = $this->db->list_tables();
+        @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: list_tables returned " . count($all_tables) . " tables\n" . json_encode($all_tables) . "\n", FILE_APPEND);
+        @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: list_tables returned " . count($all_tables) . " tables\n" . json_encode($all_tables) . "\n", FILE_APPEND);
+
         foreach ($all_tables as $table) {
             $lower_table = strtolower($table);
             if (stripos($lower_table, 'invoice') === false && stripos($lower_table, 'item') === false && stripos($lower_table, 'line') === false) {
