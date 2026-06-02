@@ -280,17 +280,17 @@ class Zra_api_model extends CI_Model
         foreach ($items as $item) {
             $qty = (float) $item['qty'];
             $rate = (float) $item['rate'];
-            $line_total = $qty * $rate;
+            $line_total = round($qty * $rate, 4);
             $tax_amount = 0;
             $vat_category = 'A'; // Default to standard VAT
             
             // Calculate tax if applicable
             $tax_rate = $this->determine_tax_rate($item);
             if ($tax_rate > 0) {
-                $tax_amount = ($line_total * $tax_rate) / (100 + $tax_rate); // Tax-inclusive calculation
+                $tax_amount = round(($line_total * $tax_rate) / (100 + $tax_rate), 4); // Tax-inclusive calculation
             }
             
-            $taxable_amount = $line_total - $tax_amount;
+            $taxable_amount = round($line_total - $tax_amount, 4);
             
             // Build line item according to VSDC specification
             $invoice_items[] = [
@@ -333,6 +333,14 @@ class Zra_api_model extends CI_Model
             $total_amount += $line_total;
         }
 
+        array_walk($tax_totals, function (&$amount) {
+            $amount = round($amount, 4);
+        });
+
+        $total_taxable = round($total_taxable, 4);
+        $total_tax = round($total_tax, 4);
+        $total_amount = round($total_amount, 4);
+
         // Standard tax rates as per ZRA specification
         $tax_rates = [
             'taxRtA' => 16, 'taxRtB' => 16, 'taxRtC1' => 0, 'taxRtC2' => 0, 'taxRtC3' => 0,
@@ -345,8 +353,6 @@ class Zra_api_model extends CI_Model
         $request_data = array_merge([
             'tpin' => $this->company_tin,
             'bhfId' => $this->branch_id,
-            'orgSdcId' => '', // Original SDC ID - only used for credit/debit notes
-            'orgInvcNo' => '', // Original invoice number for debit/credit notes (empty for normal invoices)
             'cisInvcNo' => $invoice->number,
             'custTpin' => $this->sanitize_tpin($client->vat ?? ''), // Customer TPIN trimmed/validated
             'custNm' => $client->company,
@@ -362,11 +368,11 @@ class Zra_api_model extends CI_Model
             'rfdDt' => null, // Refund date
             'rfdRsnCd' => null, // Refund reason code
             'totItemCnt' => count($invoice_items),
-            'totTaxblAmt' => (float)$total_taxable,
-            'totTaxAmt' => (float)$total_tax,
+            'totTaxblAmt' => round($total_taxable, 4),
+            'totTaxAmt' => round($total_tax, 4),
             'cashDcRt' => 0, // Cash discount rate
             'cashDcAmt' => 0, // Cash discount amount
-            'totAmt' => (float)$total_amount,
+            'totAmt' => round($total_amount, 4),
             'prchrAcptcYn' => 'N', // Purchase acceptance
             'remark' => 'Invoice submitted via PerfexCRM ZRA Module',
             'regrId' => 'ADMIN',
@@ -387,10 +393,6 @@ class Zra_api_model extends CI_Model
         if (count($invoice_items) === 0) {
             return ['success' => false, 'message' => 'Invoice has no line items; cannot submit to ZRA'];
         }
-
-        // Keep original invoice fields as empty strings for normal invoice submission
-        $request_data['orgSdcId'] = '';
-        $request_data['orgInvcNo'] = '';
 
         // Ensure totItemCnt reflects actual items
         $request_data['totItemCnt'] = count($invoice_items);
