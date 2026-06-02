@@ -402,6 +402,9 @@ class Zra_api_model extends CI_Model
 
     private function get_invoice_items_by_query($invoice_id)
     {
+        $debugFile = APPPATH . 'logs/zra_submit_invoice_debug.log';
+        $tempFile = sys_get_temp_dir() . '/zra_submit_invoice_error.log';
+
         $possible_tables = [
             db_prefix() . 'invoice_items',
             db_prefix() . 'invoiceitems',
@@ -410,62 +413,84 @@ class Zra_api_model extends CI_Model
             db_prefix() . 'invoice_item'
         ];
 
+        @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: checking possible item tables: " . json_encode($possible_tables) . "\n", FILE_APPEND);
+        @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: checking possible item tables: " . json_encode($possible_tables) . "\n", FILE_APPEND);
+
         $candidate_where_columns = ['invoiceid', 'invoice_id', 'rel_id', 'id', 'invoice'];
 
         foreach ($possible_tables as $table) {
-            if ($this->db->table_exists($table)) {
+            $exists = $this->db->table_exists($table);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: table {$table} exists=" . var_export($exists, true) . "\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: table {$table} exists=" . var_export($exists, true) . "\n", FILE_APPEND);
+
+            if ($exists) {
+                $fields = $this->db->list_fields($table);
+                @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: table {$table} fields=" . json_encode($fields) . "\n", FILE_APPEND);
+                @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: table {$table} fields=" . json_encode($fields) . "\n", FILE_APPEND);
+
                 foreach ($candidate_where_columns as $col) {
-                    if ($this->db->field_exists($col, $table)) {
+                    $hasField = $this->db->field_exists($col, $table);
+                    @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: checking column {$col} in {$table}: " . var_export($hasField, true) . "\n", FILE_APPEND);
+                    @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: checking column {$col} in {$table}: " . var_export($hasField, true) . "\n", FILE_APPEND);
+
+                    if ($hasField) {
                         $rows = $this->db->select('*')
                             ->from($table)
                             ->where($col, $invoice_id)
                             ->get()
                             ->result_array();
 
-                        $items = [];
-                        foreach ($rows as $r) {
-                            // Map possible column names to expected keys
-                            $description = null;
-                            foreach (['description', 'item_description', 'item_name', 'name'] as $d) {
-                                if (isset($r[$d]) && $r[$d] !== null) {
-                                    $description = $r[$d];
-                                    break;
+                        $count = is_array($rows) ? count($rows) : 0;
+                        @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: found {$count} rows in {$table} where {$col}={$invoice_id}\n", FILE_APPEND);
+                        @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: found {$count} rows in {$table} where {$col}={$invoice_id}\n", FILE_APPEND);
+
+                        if ($count > 0) {
+                            $items = [];
+                            foreach ($rows as $r) {
+                                // Map possible column names to expected keys
+                                $description = null;
+                                foreach (['description', 'item_description', 'item_name', 'name'] as $d) {
+                                    if (isset($r[$d]) && $r[$d] !== null) {
+                                        $description = $r[$d];
+                                        break;
+                                    }
                                 }
+
+                                $qty = null;
+                                foreach (['qty', 'quantity', 'amount'] as $q) {
+                                    if (isset($r[$q]) && $r[$q] !== null) {
+                                        $qty = $r[$q];
+                                        break;
+                                    }
+                                }
+
+                                $rate = null;
+                                foreach (['rate', 'unit_price', 'price', 'amount'] as $p) {
+                                    if (isset($r[$p]) && $r[$p] !== null) {
+                                        $rate = $r[$p];
+                                        break;
+                                    }
+                                }
+
+                                $tax = null;
+                                foreach (['tax', 'tax_rate', 'taxrate'] as $t) {
+                                    if (isset($r[$t]) && $r[$t] !== null) {
+                                        $tax = $r[$t];
+                                        break;
+                                    }
+                                }
+
+                                $items[] = [
+                                    'description' => $description ?? (isset($r['description']) ? $r['description'] : ''),
+                                    'qty' => $qty !== null ? $qty : (isset($r['qty']) ? $r['qty'] : 1),
+                                    'rate' => $rate !== null ? $rate : 0,
+                                    'tax' => $tax !== null ? $tax : 0,
+                                    'raw_row_sample' => array_slice($r, 0, 6)
+                                ];
                             }
 
-                            $qty = null;
-                            foreach (['qty', 'quantity', 'amount'] as $q) {
-                                if (isset($r[$q]) && $r[$q] !== null) {
-                                    $qty = $r[$q];
-                                    break;
-                                }
-                            }
-
-                            $rate = null;
-                            foreach (['rate', 'unit_price', 'price', 'amount'] as $p) {
-                                if (isset($r[$p]) && $r[$p] !== null) {
-                                    $rate = $r[$p];
-                                    break;
-                                }
-                            }
-
-                            $tax = null;
-                            foreach (['tax', 'tax_rate', 'taxrate'] as $t) {
-                                if (isset($r[$t]) && $r[$t] !== null) {
-                                    $tax = $r[$t];
-                                    break;
-                                }
-                            }
-
-                            $items[] = [
-                                'description' => $description ?? (isset($r['description']) ? $r['description'] : ''),
-                                'qty' => $qty !== null ? $qty : (isset($r['qty']) ? $r['qty'] : 1),
-                                'rate' => $rate !== null ? $rate : 0,
-                                'tax' => $tax !== null ? $tax : 0
-                            ];
-                        }
-
-                        if (!empty($items)) {
+                            @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: returning items from {$table} where {$col}\n" , FILE_APPEND);
+                            @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: returning items from {$table} where {$col}\n" , FILE_APPEND);
                             return $items;
                         }
                     }

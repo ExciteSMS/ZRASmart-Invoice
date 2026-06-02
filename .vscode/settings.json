@@ -11,6 +11,7 @@
         "/^cd /workspaces/ZRASmart-Invoice && php -l models/Zra_api_model\\.php$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "true": true
     }
 }
