@@ -38,8 +38,12 @@ class Zra_api_model extends CI_Model
      */
     public function submit_invoice($invoice_id)
     {
+        file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_model.log', date('Y-m-d H:i:s') . ' MODEL ENTRY invoice_id=' . var_export($invoice_id, true) . "\n", FILE_APPEND);
+
         if (!get_option('zra_enabled')) {
-            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+            $result = ['success' => false, 'message' => 'ZRA integration is disabled'];
+            file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_model.log', date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($result) . "\n", FILE_APPEND);
+            return $result;
         }
 
         try {
@@ -82,7 +86,7 @@ class Zra_api_model extends CI_Model
             ];
             
             $this->log_transaction($log_data);
-            
+            file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_model.log', date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($response) . "\n", FILE_APPEND);
             return $response;
         } catch (\Throwable $th) {
             $message = 'ZRA API submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine();

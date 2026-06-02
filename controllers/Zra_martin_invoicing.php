@@ -68,6 +68,8 @@ class Zra_martin_invoicing extends AdminController
 
     public function submit_invoice($invoice_id = null)
     {
+        file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_entry.log', date('Y-m-d H:i:s') . ' CONTROLLER ENTRY invoice_id=' . var_export($invoice_id, true) . ' ajax=' . var_export($this->input->is_ajax_request(), true) . "\n", FILE_APPEND);
+
         if (!has_permission('zra_invoicing', '', 'create')) {
             if ($this->input->is_ajax_request()) {
                 ajax_access_denied();
@@ -90,6 +92,7 @@ class Zra_martin_invoicing extends AdminController
         }
         
         if ($this->input->is_ajax_request()) {
+            file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_entry.log', date('Y-m-d H:i:s') . ' CONTROLLER RESULT ' . json_encode($result) . "\n", FILE_APPEND);
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode($result);
             return;
