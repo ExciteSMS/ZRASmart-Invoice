@@ -321,7 +321,7 @@ class Zra_api_model extends CI_Model
                 'tlAmt' => 0, // Tourism levy amount
                 'vatAmt' => round($tax_amount, 4),
                 'exciseTxAmt' => 0,
-                'totAmt' => round($line_total, 4)
+                'totAmt' => round($line_total, 2)
             ];
             
             // Accumulate tax totals by category
@@ -354,7 +354,7 @@ class Zra_api_model extends CI_Model
             'tpin' => $this->company_tin,
             'bhfId' => $this->branch_id,
             'orgSdcId' => '', // Original SDC ID - empty for normal invoices
-            'orgInvcNo' => '', // Original invoice number - empty for normal invoices
+            'orgInvcNo' => 0, // Original invoice number - use 0 for normal invoices
             'cisInvcNo' => $invoice->number,
             'custTpin' => $this->sanitize_tpin($client->vat ?? ''), // Customer TPIN trimmed/validated
             'custNm' => $client->company,
@@ -370,11 +370,11 @@ class Zra_api_model extends CI_Model
             'rfdDt' => null, // Refund date
             'rfdRsnCd' => null, // Refund reason code
             'totItemCnt' => count($invoice_items),
-            'totTaxblAmt' => round($total_taxable, 4),
-            'totTaxAmt' => round($total_tax, 4),
+            'totTaxblAmt' => round($total_taxable, 2),
+            'totTaxAmt' => round($total_tax, 2),
             'cashDcRt' => 0, // Cash discount rate
             'cashDcAmt' => 0, // Cash discount amount
-            'totAmt' => round($total_amount, 4),
+            'totAmt' => round($total_amount, 2),
             'prchrAcptcYn' => 'N', // Purchase acceptance
             'remark' => 'Invoice submitted via PerfexCRM ZRA Module',
             'regrId' => 'ADMIN',
