@@ -42,44 +42,53 @@ class Zra_api_model extends CI_Model
             return ['success' => false, 'message' => 'ZRA integration is disabled'];
         }
 
-        // Get invoice data
-        $this->load->model('invoices_model');
-        $invoice = $this->invoices_model->get($invoice_id);
-        
-        if (!$invoice) {
-            return ['success' => false, 'message' => 'Invoice not found'];
-        }
+        try {
+            // Get invoice data
+            $this->load->model('invoices_model');
+            $invoice = $this->invoices_model->get($invoice_id);
+            
+            if (!$invoice) {
+                return ['success' => false, 'message' => 'Invoice not found'];
+            }
 
-        // Check if already submitted
-        $existing_log = $this->get_invoice_log($invoice_id, 'success');
-        if ($existing_log) {
-            return ['success' => false, 'message' => 'Invoice already submitted to ZRA'];
-        }
+            // Check if already submitted
+            $existing_log = $this->get_invoice_log($invoice_id, 'success');
+            if ($existing_log) {
+                return ['success' => false, 'message' => 'Invoice already submitted to ZRA'];
+            }
 
-        // Prepare invoice data for ZRA
-        $zra_data = $this->prepare_invoice_data($invoice);
-        
-        // Submit to ZRA API
-        $response = $this->call_api('/trnsSales/saveSales', $zra_data);
-        
-        // Log the transaction with VSDC response format
-        $log_data = [
-            'invoice_id' => $invoice_id,
-            'request_type' => 'invoice_submission',
-            'request_data' => json_encode($zra_data),
-            'response_data' => json_encode($response),
-            'status' => $response['success'] ? 'success' : 'failed',
-            'error_code' => $response['resultCd'] ?? null,
-            'error_message' => $response['message'] ?? null,
-            'zra_invoice_number' => $response['data']['invoice_number'] ?? null,
-            'qr_code' => $response['data']['qr_code'] ?? null,
-            'fiscal_tax_id' => $response['data']['fiscal_tax_id'] ?? null,
-            'result_date' => $response['resultDt'] ?? null
-        ];
-        
-        $this->log_transaction($log_data);
-        
-        return $response;
+            // Prepare invoice data for ZRA
+            $zra_data = $this->prepare_invoice_data($invoice);
+            if (isset($zra_data['success']) && $zra_data['success'] === false) {
+                return $zra_data;
+            }
+            
+            // Submit to ZRA API
+            $response = $this->call_api('/trnsSales/saveSales', $zra_data);
+            
+            // Log the transaction with VSDC response format
+            $log_data = [
+                'invoice_id' => $invoice_id,
+                'request_type' => 'invoice_submission',
+                'request_data' => json_encode($zra_data),
+                'response_data' => json_encode($response),
+                'status' => isset($response['success']) && $response['success'] ? 'success' : 'failed',
+                'error_code' => $response['resultCd'] ?? $response['error_code'] ?? null,
+                'error_message' => $response['message'] ?? null,
+                'zra_invoice_number' => $response['data']['invoice_number'] ?? null,
+                'qr_code' => $response['data']['qr_code'] ?? null,
+                'fiscal_tax_id' => $response['data']['fiscal_tax_id'] ?? null,
+                'result_date' => $response['resultDt'] ?? null
+            ];
+            
+            $this->log_transaction($log_data);
+            
+            return $response;
+        } catch (\Throwable $th) {
+            log_message('error', 'ZRA API submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine());
+            log_message('error', $th->getTraceAsString());
+            return ['success' => false, 'message' => 'Internal server error while submitting invoice'];
+        }
     }
 
     public function submit_refund($invoice_id, $refund_data)

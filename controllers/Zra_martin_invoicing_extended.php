@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Zra_martin_invoicing extends AdminController
+class Zra_martin_invoicing_extended extends AdminController
 {
     public function __construct()
     {
