@@ -343,10 +343,10 @@ class Zra_api_model extends CI_Model
         $request_data = array_merge([
             'tpin' => $this->company_tin,
             'bhfId' => $this->branch_id,
-            'orgSdcId' => null, // Original SDC ID - only used for credit/debit notes
-            'orgInvcNo' => null, // Original invoice number for debit/credit notes
+            'orgSdcId' => '', // Original SDC ID - only used for credit/debit notes
+            'orgInvcNo' => '', // Original invoice number for debit/credit notes (empty for normal invoices)
             'cisInvcNo' => $invoice->number,
-            'custTpin' => $client->vat ?? '', // Customer TIN if available
+            'custTpin' => $this->sanitize_tpin($client->vat ?? ''), // Customer TPIN trimmed/validated
             'custNm' => $client->company,
             'salesTyCd' => 'N', // Normal sale
             'rcptTyCd' => 'S', // Sales receipt
@@ -394,16 +394,65 @@ class Zra_api_model extends CI_Model
             db_prefix() . 'invoice_item'
         ];
 
+        $candidate_where_columns = ['invoiceid', 'invoice_id', 'rel_id', 'id', 'invoice'];
+
         foreach ($possible_tables as $table) {
             if ($this->db->table_exists($table)) {
-                $items = $this->db->select('description,qty,rate,tax')
-                    ->from($table)
-                    ->where('invoiceid', $invoice_id)
-                    ->get()
-                    ->result_array();
+                foreach ($candidate_where_columns as $col) {
+                    if ($this->db->field_exists($col, $table)) {
+                        $rows = $this->db->select('*')
+                            ->from($table)
+                            ->where($col, $invoice_id)
+                            ->get()
+                            ->result_array();
 
-                if (is_array($items)) {
-                    return $items;
+                        $items = [];
+                        foreach ($rows as $r) {
+                            // Map possible column names to expected keys
+                            $description = null;
+                            foreach (['description', 'item_description', 'item_name', 'name'] as $d) {
+                                if (isset($r[$d]) && $r[$d] !== null) {
+                                    $description = $r[$d];
+                                    break;
+                                }
+                            }
+
+                            $qty = null;
+                            foreach (['qty', 'quantity', 'amount'] as $q) {
+                                if (isset($r[$q]) && $r[$q] !== null) {
+                                    $qty = $r[$q];
+                                    break;
+                                }
+                            }
+
+                            $rate = null;
+                            foreach (['rate', 'unit_price', 'price', 'amount'] as $p) {
+                                if (isset($r[$p]) && $r[$p] !== null) {
+                                    $rate = $r[$p];
+                                    break;
+                                }
+                            }
+
+                            $tax = null;
+                            foreach (['tax', 'tax_rate', 'taxrate'] as $t) {
+                                if (isset($r[$t]) && $r[$t] !== null) {
+                                    $tax = $r[$t];
+                                    break;
+                                }
+                            }
+
+                            $items[] = [
+                                'description' => $description ?? (isset($r['description']) ? $r['description'] : ''),
+                                'qty' => $qty !== null ? $qty : (isset($r['qty']) ? $r['qty'] : 1),
+                                'rate' => $rate !== null ? $rate : 0,
+                                'tax' => $tax !== null ? $tax : 0
+                            ];
+                        }
+
+                        if (!empty($items)) {
+                            return $items;
+                        }
+                    }
                 }
             }
         }
@@ -423,6 +472,18 @@ class Zra_api_model extends CI_Model
             'REFUND_AMOUNT' => $refund_data['amount'],
             'REFUND_REASON' => $refund_data['reason'] ?? 'Customer refund'
         ];
+    }
+
+    private function sanitize_tpin($tpin)
+    {
+        $tpin = trim((string)$tpin);
+        // Remove any non-alphanumeric characters
+        $clean = preg_replace('/[^0-9A-Za-z]/', '', $tpin);
+        // TPIN expected to be 10 characters (digits); validate and return or empty string
+        if (strlen($clean) === 10) {
+            return $clean;
+        }
+        return '';
     }
 
     private function determine_tax_rate($item)
