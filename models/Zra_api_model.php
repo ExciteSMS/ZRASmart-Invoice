@@ -199,9 +199,9 @@ class Zra_api_model extends CI_Model
         
         // Get invoice items
         $items = $this->invoices_model->get_invoice_items($invoice->id);
-+        if (!is_array($items)) {
-+            $items = [];
-+        }
+        if (!is_array($items)) {
+            $items = [];
+        }
         
         $invoice_items = [];
         $item_sequence = 1;

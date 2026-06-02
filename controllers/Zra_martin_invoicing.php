@@ -203,13 +203,19 @@ class Zra_martin_invoicing extends AdminController
             access_denied('zra_invoicing');
         }
 
-        if ($this->input->post()) {
-            $this->handle_fetch_invoices_post();
-        }
+        try {
+            if ($this->input->post()) {
+                $this->handle_fetch_invoices_post();
+            }
 
-        $data['title'] = _l('zra_fetch_invoices');
-        
-        $this->load->view('fetch_invoices', $data);
+            $data['title'] = _l('zra_fetch_invoices');
+            $this->load->view('fetch_invoices', $data);
+        } catch (Exception $e) {
+            $message = 'Error loading fetch_invoices: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine();
+            log_message('error', $message);
+            @file_put_contents('/tmp/zra_fetch_invoices_error.log', $message . "\n" . $e->getTraceAsString() . "\n\n", FILE_APPEND);
+            show_error('An unexpected error occurred while loading the Fetch Invoices page. Please check the application logs.');
+        }
     }
 
     public function fetch_single_invoice()
