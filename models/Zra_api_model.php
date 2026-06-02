@@ -566,6 +566,7 @@ class Zra_api_model extends CI_Model
             `zra_invoice_number` varchar(100) NULL,
             `qr_code` text NULL,
             `fiscal_tax_id` varchar(100) NULL,
+            `result_date` varchar(100) NULL,
             `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
@@ -590,6 +591,7 @@ class Zra_api_model extends CI_Model
             'zra_invoice_number' => 'varchar(100) NULL',
             'qr_code' => 'text NULL',
             'fiscal_tax_id' => 'varchar(100) NULL',
+            'result_date' => 'varchar(100) NULL',
             'created_at' => 'datetime NOT NULL DEFAULT CURRENT_TIMESTAMP',
             'updated_at' => 'datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
         ];
