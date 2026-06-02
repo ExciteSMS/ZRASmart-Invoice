@@ -405,16 +405,22 @@ class Zra_api_model extends CI_Model
         $debugFile = APPPATH . 'logs/zra_submit_invoice_debug.log';
         $tempFile = sys_get_temp_dir() . '/zra_submit_invoice_error.log';
 
-        $possible_tables = [
-            db_prefix() . 'invoice_items',
-            db_prefix() . 'invoiceitems',
-            db_prefix() . 'tblinvoiceitems',
-            db_prefix() . 'tblinvoice_items',
-            db_prefix() . 'invoice_item'
-        ];
+        $prefix = db_prefix();
+        $candidate_suffixes = ['invoice_items', 'invoiceitems', 'invoice_item', 'items'];
+        $possible_tables = [];
 
-        @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: checking possible item tables: " . json_encode($possible_tables) . "\n", FILE_APPEND);
-        @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: checking possible item tables: " . json_encode($possible_tables) . "\n", FILE_APPEND);
+        foreach ($candidate_suffixes as $suffix) {
+            $possible_tables[] = $prefix . $suffix;
+            $possible_tables[] = $suffix;
+            if (strpos($suffix, 'tbl') !== 0) {
+                $possible_tables[] = 'tbl' . $suffix;
+            }
+        }
+
+        $possible_tables = array_values(array_unique($possible_tables));
+
+        @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: db_prefix=" . var_export($prefix, true) . "; checking possible item tables: " . json_encode($possible_tables) . "\n", FILE_APPEND);
+        @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: db_prefix=" . var_export($prefix, true) . "; checking possible item tables: " . json_encode($possible_tables) . "\n", FILE_APPEND);
 
         $candidate_where_columns = ['invoiceid', 'invoice_id', 'rel_id', 'id', 'invoice'];
 
