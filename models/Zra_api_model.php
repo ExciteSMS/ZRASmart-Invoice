@@ -444,7 +444,7 @@ class Zra_api_model extends CI_Model
                     }
 
                     if ($col === 'related_id' && $this->db->field_exists('related_type', $table)) {
-                        $related_types = ['invoice', 'invoices', 'invoice_item', 'invoice_items', 'tblinvoice', 'tblinvoiceitems'];
+                        $related_types = ['invoice', 'invoices', 'invoice_item', 'invoice_items', 'tblinvoice', 'tblinvoiceitems', 'tblinvoices'];
                         foreach ($related_types as $related_type) {
                             $rows = $this->db->select('*')
                                 ->from($table)
@@ -568,6 +568,100 @@ class Zra_api_model extends CI_Model
                         @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: returning items from {$table} where {$col}={$invoice_id}\n" , FILE_APPEND);
                         return $items;
                     }
+                }
+            }
+        }
+
+        @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: no invoice item rows found in candidate tables, starting broad fallback search\n", FILE_APPEND);
+        @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: no invoice item rows found in candidate tables, starting broad fallback search\n", FILE_APPEND);
+
+        $all_tables = $this->db->list_tables();
+        foreach ($all_tables as $table) {
+            $lower_table = strtolower($table);
+            if (stripos($lower_table, 'invoice') === false && stripos($lower_table, 'item') === false && stripos($lower_table, 'line') === false) {
+                continue;
+            }
+            if (in_array($table, $possible_tables, true)) {
+                continue;
+            }
+
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search checking table {$table}\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search checking table {$table}\n", FILE_APPEND);
+
+            if (!$this->db->table_exists($table)) {
+                continue;
+            }
+
+            $fields = $this->db->list_fields($table);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search table {$table} fields=" . json_encode($fields) . "\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search table {$table} fields=" . json_encode($fields) . "\n", FILE_APPEND);
+
+            foreach ($candidate_where_columns as $col) {
+                $hasField = $this->db->field_exists($col, $table);
+                @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search checking column {$col} in {$table}: " . var_export($hasField, true) . "\n", FILE_APPEND);
+                @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search checking column {$col} in {$table}: " . var_export($hasField, true) . "\n", FILE_APPEND);
+
+                if (!$hasField) {
+                    continue;
+                }
+
+                $rows = $this->db->select('*')
+                    ->from($table)
+                    ->where($col, $invoice_id)
+                    ->get()
+                    ->result_array();
+
+                $count = is_array($rows) ? count($rows) : 0;
+                @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search found {$count} rows in {$table} where {$col}={$invoice_id}\n", FILE_APPEND);
+                @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: broad search found {$count} rows in {$table} where {$col}={$invoice_id}\n", FILE_APPEND);
+
+                if ($count > 0) {
+                    $items = [];
+                    foreach ($rows as $r) {
+                        $description = null;
+                        foreach (['description', 'item_description', 'item_name', 'name'] as $d) {
+                            if (isset($r[$d]) && $r[$d] !== null) {
+                                $description = $r[$d];
+                                break;
+                            }
+                        }
+
+                        $qty = null;
+                        foreach (['qty', 'quantity', 'amount'] as $q) {
+                            if (isset($r[$q]) && $r[$q] !== null) {
+                                $qty = $r[$q];
+                                break;
+                            }
+                        }
+
+                        $rate = null;
+                        foreach (['rate', 'unit_price', 'price', 'amount'] as $p) {
+                            if (isset($r[$p]) && $r[$p] !== null) {
+                                $rate = $r[$p];
+                                break;
+                            }
+                        }
+
+                        $tax = null;
+                        foreach (['tax', 'tax_rate', 'taxrate'] as $t) {
+                            if (isset($r[$t]) && $r[$t] !== null) {
+                                $tax = $r[$t];
+                                break;
+                            }
+                        }
+
+                        $items[] = [
+                            'description' => $description ?? (isset($r['description']) ? $r['description'] : ''),
+                            'qty' => $qty !== null ? $qty : (isset($r['qty']) ? $r['qty'] : 1),
+                            'rate' => $rate !== null ? $rate : 0,
+                            'tax' => $tax !== null ? $tax : 0,
+                            'raw_row_sample' => array_slice($r, 0, 6)
+                        ];
+                    }
+
+                    @file_put_contents($debugFile, date('Y-m-d H:i:s') . " MODEL DEBUG: returning items from broad search table {$table} where {$col}={$invoice_id}\n", FILE_APPEND);
+                    @file_put_contents($tempFile, date('Y-m-d H:i:s') . " MODEL DEBUG: returning items from broad search table {$table} where {$col}={$invoice_id}\n", FILE_APPEND);
+                    return $items;
                 }
             }
         }
