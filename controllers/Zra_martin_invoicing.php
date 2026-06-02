@@ -82,8 +82,10 @@ class Zra_martin_invoicing extends AdminController
         try {
             $result = $this->zra_api_model->submit_invoice($invoice_id);
         } catch (\Throwable $th) {
-            log_message('error', 'ZRA submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine());
+            $message = 'ZRA submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine();
+            log_message('error', $message);
             log_message('error', $th->getTraceAsString());
+            @file_put_contents('/tmp/zra_submit_invoice_error.log', date('Y-m-d H:i:s') . ' CONTROLLER: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
             $result = ['success' => false, 'message' => 'Internal server error while submitting invoice'];
         }
         

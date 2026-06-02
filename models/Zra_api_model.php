@@ -85,8 +85,10 @@ class Zra_api_model extends CI_Model
             
             return $response;
         } catch (\Throwable $th) {
-            log_message('error', 'ZRA API submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine());
+            $message = 'ZRA API submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine();
+            log_message('error', $message);
             log_message('error', $th->getTraceAsString());
+            @file_put_contents('/tmp/zra_submit_invoice_error.log', date('Y-m-d H:i:s') . ' MODEL: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
             return ['success' => false, 'message' => 'Internal server error while submitting invoice'];
         }
     }
