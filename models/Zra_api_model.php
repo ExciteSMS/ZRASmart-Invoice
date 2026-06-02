@@ -278,14 +278,16 @@ class Zra_api_model extends CI_Model
         $total_amount = 0;
 
         foreach ($items as $item) {
-            $line_total = $item['qty'] * $item['rate'];
+            $qty = (float) $item['qty'];
+            $rate = (float) $item['rate'];
+            $line_total = $qty * $rate;
             $tax_amount = 0;
             $vat_category = 'A'; // Default to standard VAT
             
             // Calculate tax if applicable
             $tax_rate = $this->determine_tax_rate($item);
             if ($tax_rate > 0) {
-                $tax_amount = ($line_total * $tax_rate) / (100 + $tax_rate) * 100; // Tax-inclusive calculation
+                $tax_amount = ($line_total * $tax_rate) / (100 + $tax_rate); // Tax-inclusive calculation
             }
             
             $taxable_amount = $line_total - $tax_amount;
@@ -300,9 +302,9 @@ class Zra_api_model extends CI_Model
                 'pkgUnitCd' => 'U', // Default packaging unit
                 'pkg' => 0,
                 'qtyUnitCd' => 'U', // Default quantity unit
-                'qty' => (float)$item['qty'],
-                'prc' => (float)$item['rate'],
-                'splyAmt' => (float)$line_total,
+                'qty' => round($qty, 4),
+                'prc' => round($rate, 4),
+                'splyAmt' => round($line_total, 4),
                 'dcRt' => 0, // Discount rate
                 'dcAmt' => 0, // Discount amount
                 'isrccCd' => '', // Insurance company code
@@ -311,15 +313,15 @@ class Zra_api_model extends CI_Model
                 'isrcAmt' => 0, // Insurance amount
                 'vatCatCd' => $vat_category, // VAT category
                 'exciseTxCatCd' => null, // Excise tax category
-                'vatTaxblAmt' => (float)$taxable_amount,
+                'vatTaxblAmt' => round($taxable_amount, 4),
                 'exciseTaxblAmt' => 0,
                 'tlTaxblAmt' => 0, // Tourism levy taxable amount
                 'iplTaxblAmt' => 0, // IPL taxable amount
                 'iplAmt' => 0, // IPL amount
                 'tlAmt' => 0, // Tourism levy amount
-                'vatAmt' => (float)$tax_amount,
+                'vatAmt' => round($tax_amount, 4),
                 'exciseTxAmt' => 0,
-                'totAmt' => (float)$line_total
+                'totAmt' => round($line_total, 4)
             ];
             
             // Accumulate tax totals by category
@@ -386,13 +388,9 @@ class Zra_api_model extends CI_Model
             return ['success' => false, 'message' => 'Invoice has no line items; cannot submit to ZRA'];
         }
 
-        // Remove optional original invoice fields entirely when not applicable
-        if (empty($request_data['orgSdcId'])) {
-            unset($request_data['orgSdcId']);
-        }
-        if (empty($request_data['orgInvcNo'])) {
-            unset($request_data['orgInvcNo']);
-        }
+        // Keep original invoice fields as empty strings for normal invoice submission
+        $request_data['orgSdcId'] = '';
+        $request_data['orgInvcNo'] = '';
 
         // Ensure totItemCnt reflects actual items
         $request_data['totItemCnt'] = count($invoice_items);
