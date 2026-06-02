@@ -381,6 +381,22 @@ class Zra_api_model extends CI_Model
             'itemList' => $invoice_items
         ], $tax_totals, $tax_rates);
 
+        // If no items were found, fail early with clear message rather than calling the API
+        if (count($invoice_items) === 0) {
+            return ['success' => false, 'message' => 'Invoice has no line items; cannot submit to ZRA'];
+        }
+
+        // Remove optional original invoice fields entirely when not applicable
+        if (empty($request_data['orgSdcId'])) {
+            unset($request_data['orgSdcId']);
+        }
+        if (empty($request_data['orgInvcNo'])) {
+            unset($request_data['orgInvcNo']);
+        }
+
+        // Ensure totItemCnt reflects actual items
+        $request_data['totItemCnt'] = count($invoice_items);
+
         return $request_data;
     }
 
