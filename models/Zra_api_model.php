@@ -353,6 +353,8 @@ class Zra_api_model extends CI_Model
         $request_data = array_merge([
             'tpin' => $this->company_tin,
             'bhfId' => $this->branch_id,
+            'orgSdcId' => '', // Original SDC ID - empty for normal invoices
+            'orgInvcNo' => '', // Original invoice number - empty for normal invoices
             'cisInvcNo' => $invoice->number,
             'custTpin' => $this->sanitize_tpin($client->vat ?? ''), // Customer TPIN trimmed/validated
             'custNm' => $client->company,
@@ -396,6 +398,11 @@ class Zra_api_model extends CI_Model
 
         // Ensure totItemCnt reflects actual items
         $request_data['totItemCnt'] = count($invoice_items);
+
+        // Log final payload structure for debugging if debug mode is enabled
+        if ($this->debug_mode) {
+            @file_put_contents(APPPATH . 'logs/zra_submit_invoice_debug.log', date('Y-m-d H:i:s') . ' MODEL DEBUG: final request payload=' . json_encode($request_data) . "\n", FILE_APPEND);
+        }
 
         return $request_data;
     }
