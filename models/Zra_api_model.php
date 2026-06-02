@@ -222,14 +222,15 @@ class Zra_api_model extends CI_Model
 
         $payload = array_merge([
             'tpin' => $this->company_tin,
-            'bhfId' => $this->branch_id
+            'bhfId' => $this->branch_id,
+            'dvcSrlNo' => $this->device_serial
         ], $data);
 
         return $this->try_api_endpoints([
+            '/master/selectStandardCodes',
+            '/master/selectStdCodes',
             '/code/selectCodes',
             '/itemClass/selectItemsClass',
-            '/master/selectStdCodes',
-            '/master/selectStandardCodes',
             '/codes/getStandardCodes'
         ], $payload);
     }
@@ -242,7 +243,8 @@ class Zra_api_model extends CI_Model
 
         $payload = array_merge([
             'tpin' => $this->company_tin,
-            'bhfId' => $this->branch_id
+            'bhfId' => $this->branch_id,
+            'dvcSrlNo' => $this->device_serial
         ], $data);
 
         return $this->try_api_endpoints([
@@ -985,7 +987,8 @@ class Zra_api_model extends CI_Model
                 'success' => false,
                 'message' => 'Connection error: ' . $curl_error,
                 'error_code' => 'CURL_ERROR',
-                'resultCd' => '999'
+                'resultCd' => '999',
+                'endpoint' => $endpoint
             ];
         }
         
@@ -995,7 +998,9 @@ class Zra_api_model extends CI_Model
                 'message' => 'HTTP error: ' . $http_code,
                 'error_code' => 'HTTP_' . $http_code,
                 'resultCd' => '998',
-                'raw_response' => $response
+                'raw_response' => $response,
+                'endpoint' => $endpoint,
+                'http_code' => $http_code
             ];
         }
         
@@ -1007,7 +1012,8 @@ class Zra_api_model extends CI_Model
                 'message' => 'Invalid JSON response',
                 'error_code' => 'JSON_ERROR',
                 'resultCd' => '997',
-                'raw_response' => $response
+                'raw_response' => $response,
+                'endpoint' => $endpoint
             ];
         }
         
@@ -1020,7 +1026,8 @@ class Zra_api_model extends CI_Model
                 'resultCd' => $response_data['resultCd'],
                 'resultDt' => $response_data['resultDt'] ?? null,
                 'data' => $response_data['data'] ?? null,
-                'raw_response' => $response_data
+                'raw_response' => $response_data,
+                'endpoint' => $endpoint
             ];
         } else {
             // Legacy response format handling
@@ -1029,7 +1036,8 @@ class Zra_api_model extends CI_Model
                     'success' => true,
                     'message' => 'Success',
                     'resultCd' => '000',
-                    'data' => $response_data
+                    'data' => $response_data,
+                    'endpoint' => $endpoint
                 ];
             } else {
                 return [
@@ -1037,7 +1045,8 @@ class Zra_api_model extends CI_Model
                     'message' => $response_data['MESSAGE'] ?? 'Unknown error',
                     'error_code' => $response_data['ERROR_CODE'] ?? 'UNKNOWN',
                     'resultCd' => '996',
-                    'data' => $response_data
+                    'data' => $response_data,
+                    'endpoint' => $endpoint
                 ];
             }
         }
@@ -1045,14 +1054,34 @@ class Zra_api_model extends CI_Model
 
     private function try_api_endpoints(array $endpoints, array $payload)
     {
+        $attempts = [];
         $lastResponse = ['success' => false, 'message' => 'No endpoint responded successfully'];
 
         foreach ($endpoints as $endpoint) {
-            $lastResponse = $this->call_api($endpoint, $payload);
-            if (isset($lastResponse['success']) && $lastResponse['success']) {
-                return $lastResponse;
+            $response = $this->call_api($endpoint, $payload);
+            $attempts[] = [
+                'endpoint' => $endpoint,
+                'success' => $response['success'] ?? false,
+                'message' => $response['message'] ?? null,
+                'error_code' => $response['error_code'] ?? $response['resultCd'] ?? null,
+                'http_code' => $response['http_code'] ?? null,
+                'raw_response' => $response['raw_response'] ?? null
+            ];
+
+            if (isset($response['success']) && $response['success']) {
+                $response['attempted_endpoints'] = $attempts;
+                return $response;
             }
+
+            $lastResponse = $response;
         }
+
+        $messages = array_map(function ($attempt) {
+            return $attempt['endpoint'] . ': ' . ($attempt['message'] ?? 'No response');
+        }, $attempts);
+
+        $lastResponse['message'] = 'No endpoint responded successfully. Tried: ' . implode('; ', $messages);
+        $lastResponse['attempted_endpoints'] = $attempts;
 
         return $lastResponse;
     }
