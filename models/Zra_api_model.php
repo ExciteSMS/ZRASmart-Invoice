@@ -38,21 +38,34 @@ class Zra_api_model extends CI_Model
      */
     public function submit_invoice($invoice_id)
     {
-        file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_model.log', date('Y-m-d H:i:s') . ' MODEL ENTRY invoice_id=' . var_export($invoice_id, true) . "\n", FILE_APPEND);
+        $debugFile = APPPATH . 'logs/zra_submit_invoice_debug.log';
+        $tempFile = sys_get_temp_dir() . '/zra_submit_invoice_error.log';
+        @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL ENTRY invoice_id=' . var_export($invoice_id, true) . "\n", FILE_APPEND);
+        @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL ENTRY invoice_id=' . var_export($invoice_id, true) . "\n", FILE_APPEND);
 
         if (!get_option('zra_enabled')) {
             $result = ['success' => false, 'message' => 'ZRA integration is disabled'];
-            file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_model.log', date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($result) . "\n", FILE_APPEND);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($result) . "\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($result) . "\n", FILE_APPEND);
             return $result;
         }
 
         try {
             // Get invoice data
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL LOADING invoices_model\n', FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL LOADING invoices_model\n', FILE_APPEND);
             $this->load->model('invoices_model');
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL LOADED invoices_model\n', FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL LOADED invoices_model\n', FILE_APPEND);
             $invoice = $this->invoices_model->get($invoice_id);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL GOT invoice=' . var_export($invoice ? $invoice->id : null, true) . "\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL GOT invoice=' . var_export($invoice ? $invoice->id : null, true) . "\n", FILE_APPEND);
             
             if (!$invoice) {
-                return ['success' => false, 'message' => 'Invoice not found'];
+                $result = ['success' => false, 'message' => 'Invoice not found'];
+                @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($result) . "\n", FILE_APPEND);
+                @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($result) . "\n", FILE_APPEND);
+                return $result;
             }
 
             // Check if already submitted
@@ -62,8 +75,14 @@ class Zra_api_model extends CI_Model
             }
 
             // Prepare invoice data for ZRA
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL PREPARE_INVOICE_DATA\n', FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL PREPARE_INVOICE_DATA\n', FILE_APPEND);
             $zra_data = $this->prepare_invoice_data($invoice);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL PREPARE_INVOICE_DATA_DONE\n', FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL PREPARE_INVOICE_DATA_DONE\n', FILE_APPEND);
             if (isset($zra_data['success']) && $zra_data['success'] === false) {
+                @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($zra_data) . "\n", FILE_APPEND);
+                @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($zra_data) . "\n", FILE_APPEND);
                 return $zra_data;
             }
             
@@ -86,13 +105,17 @@ class Zra_api_model extends CI_Model
             ];
             
             $this->log_transaction($log_data);
-            file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_model.log', date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($response) . "\n", FILE_APPEND);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL RESPONSE_RECEIVED\n', FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL RESPONSE_RECEIVED\n', FILE_APPEND);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($response) . "\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL RESULT ' . json_encode($response) . "\n", FILE_APPEND);
             return $response;
         } catch (\Throwable $th) {
             $message = 'ZRA API submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine();
             log_message('error', $message);
             log_message('error', $th->getTraceAsString());
-            @file_put_contents('/tmp/zra_submit_invoice_error.log', date('Y-m-d H:i:s') . ' MODEL: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' MODEL CATCH: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' MODEL CATCH: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
             return ['success' => false, 'message' => 'Internal server error while submitting invoice'];
         }
     }

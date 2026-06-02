@@ -68,7 +68,10 @@ class Zra_martin_invoicing extends AdminController
 
     public function submit_invoice($invoice_id = null)
     {
-        file_put_contents(dirname(__DIR__) . '/zra_submit_invoice_entry.log', date('Y-m-d H:i:s') . ' CONTROLLER ENTRY invoice_id=' . var_export($invoice_id, true) . ' ajax=' . var_export($this->input->is_ajax_request(), true) . "\n", FILE_APPEND);
+        $debugFile = APPPATH . 'logs/zra_submit_invoice_debug.log';
+        $tempFile = sys_get_temp_dir() . '/zra_submit_invoice_error.log';
+        @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' CONTROLLER ENTRY invoice_id=' . var_export($invoice_id, true) . ' ajax=' . var_export($this->input->is_ajax_request(), true) . "\n", FILE_APPEND);
+        @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' CONTROLLER ENTRY invoice_id=' . var_export($invoice_id, true) . ' ajax=' . var_export($this->input->is_ajax_request(), true) . "\n", FILE_APPEND);
 
         if (!has_permission('zra_invoicing', '', 'create')) {
             if ($this->input->is_ajax_request()) {
@@ -84,10 +87,13 @@ class Zra_martin_invoicing extends AdminController
         try {
             $result = $this->zra_api_model->submit_invoice($invoice_id);
         } catch (\Throwable $th) {
+            $debugFile = APPPATH . 'logs/zra_submit_invoice_debug.log';
+            $tempFile = sys_get_temp_dir() . '/zra_submit_invoice_error.log';
             $message = 'ZRA submit_invoice throwable: ' . $th->getMessage() . ' in ' . $th->getFile() . ' on line ' . $th->getLine();
             log_message('error', $message);
             log_message('error', $th->getTraceAsString());
-            @file_put_contents('/tmp/zra_submit_invoice_error.log', date('Y-m-d H:i:s') . ' CONTROLLER: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
+            @file_put_contents($debugFile, date('Y-m-d H:i:s') . ' CONTROLLER: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
+            @file_put_contents($tempFile, date('Y-m-d H:i:s') . ' CONTROLLER: ' . $message . "\n" . $th->getTraceAsString() . "\n\n", FILE_APPEND);
             $result = ['success' => false, 'message' => 'Internal server error while submitting invoice'];
         }
         
