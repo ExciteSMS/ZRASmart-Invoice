@@ -157,4 +157,44 @@ document.addEventListener('DOMContentLoaded', function() {
             zraExecutePost(zraSettingsConfig.initializeUrl, initializeButton, 'Initializing device...', zraSettingsConfig.initializeSuccessfulText, zraSettingsConfig.initializeFailedText);
         });
     }
+
+    var retrieveStandardCodesButton = document.getElementById('retrieve-standard-codes');
+    var retrieveItemCodesButton = document.getElementById('retrieve-item-codes');
+    var retryPendingButton = document.getElementById('retry-pending-submissions');
+
+    if (retrieveStandardCodesButton) {
+        retrieveStandardCodesButton.addEventListener('click', function() {
+            zraExecutePost(
+                zraSettingsConfig.retrieveStandardCodesUrl,
+                retrieveStandardCodesButton,
+                'Retrieving standard codes...',
+                zraSettingsConfig.codesRetrievedSuccessText,
+                zraSettingsConfig.codesRetrievedFailedText
+            );
+        });
+    }
+
+    if (retrieveItemCodesButton) {
+        retrieveItemCodesButton.addEventListener('click', function() {
+            zraExecutePost(
+                zraSettingsConfig.retrieveItemCodesUrl,
+                retrieveItemCodesButton,
+                'Retrieving item classification codes...',
+                zraSettingsConfig.codesRetrievedSuccessText,
+                zraSettingsConfig.codesRetrievedFailedText
+            );
+        });
+    }
+
+    if (retryPendingButton) {
+        retryPendingButton.addEventListener('click', function() {
+            zraExecutePost(
+                zraSettingsConfig.retryPendingSubmissionsUrl,
+                retryPendingButton,
+                'Retrying pending submissions...',
+                zraSettingsConfig.retryPendingSuccessText,
+                zraSettingsConfig.retryPendingFailedText
+            );
+        });
+    }
 });

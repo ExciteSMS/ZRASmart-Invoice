@@ -160,6 +160,112 @@ class Zra_martin_invoicing extends AdminController
         echo json_encode($result);
     }
 
+    public function get_standard_codes()
+    {
+        if (!has_permission('zra_invoicing', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->get_standard_codes($payload);
+
+        echo json_encode($response);
+    }
+
+    public function get_item_classification_codes()
+    {
+        if (!has_permission('zra_invoicing', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->get_item_classification_codes($payload);
+
+        echo json_encode($response);
+    }
+
+    public function fetch_import_items()
+    {
+        if (!has_permission('zra_invoicing', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->fetch_import_items($payload);
+
+        echo json_encode($response);
+    }
+
+    public function retrieve_purchases()
+    {
+        if (!has_permission('zra_invoicing', '', 'view')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->retrieve_purchases($payload);
+
+        echo json_encode($response);
+    }
+
+    public function save_purchase()
+    {
+        if (!has_permission('zra_invoicing', '', 'create')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->save_purchase($payload);
+
+        echo json_encode($response);
+    }
+
+    public function save_non_smart_supplier_purchase()
+    {
+        if (!has_permission('zra_invoicing', '', 'create')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->save_non_smart_supplier_purchase($payload);
+
+        echo json_encode($response);
+    }
+
+    public function save_item()
+    {
+        if (!has_permission('zra_invoicing', '', 'create')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->save_item($payload);
+
+        echo json_encode($response);
+    }
+
+    public function save_stock_adjustment()
+    {
+        if (!has_permission('zra_invoicing', '', 'create')) {
+            ajax_access_denied();
+        }
+
+        $payload = $this->input->post();
+        $response = $this->zra_api_model->save_stock_adjustment($payload);
+
+        echo json_encode($response);
+    }
+
+    public function retry_pending_submissions()
+    {
+        if (!has_permission('zra_invoicing', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $result = $this->zra_api_model->retry_pending_submissions();
+        echo json_encode(['success' => true, 'results' => $result]);
+    }
+
     public function get_invoice_status($invoice_id)
     {
         if (!has_permission('zra_invoicing', '', 'view')) {

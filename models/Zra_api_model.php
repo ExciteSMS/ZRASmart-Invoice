@@ -89,13 +89,20 @@ class Zra_api_model extends CI_Model
             // Submit to ZRA API
             $response = $this->call_api('/trnsSales/saveSales', $zra_data);
             
+            $status = 'failed';
+            if (isset($response['success']) && $response['success']) {
+                $status = 'success';
+            } elseif ($this->is_offline_failure($response)) {
+                $status = 'pending';
+            }
+
             // Log the transaction with VSDC response format
             $log_data = [
                 'invoice_id' => $invoice_id,
                 'request_type' => 'invoice_submission',
                 'request_data' => json_encode($zra_data),
                 'response_data' => json_encode($response),
-                'status' => isset($response['success']) && $response['success'] ? 'success' : 'failed',
+                'status' => $status,
                 'error_code' => $response['resultCd'] ?? $response['error_code'] ?? null,
                 'error_message' => $response['message'] ?? null,
                 'zra_invoice_number' => $response['data']['invoice_number'] ?? null,
@@ -207,6 +214,120 @@ class Zra_api_model extends CI_Model
         return $this->call_api('/items/saveItem', $data);
     }
 
+    public function get_standard_codes($data = [])
+    {
+        if (!get_option('zra_enabled')) {
+            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+        }
+
+        $payload = array_merge([
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id
+        ], $data);
+
+        return $this->try_api_endpoints([
+            '/master/selectStdCodes',
+            '/master/selectStandardCodes',
+            '/codes/getStandardCodes'
+        ], $payload);
+    }
+
+    public function get_item_classification_codes($data = [])
+    {
+        if (!get_option('zra_enabled')) {
+            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+        }
+
+        $payload = array_merge([
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id
+        ], $data);
+
+        return $this->try_api_endpoints([
+            '/master/selectItemClassificationCodes',
+            '/items/selectItemClsCd',
+            '/items/selectItemClassificationCodes'
+        ], $payload);
+    }
+
+    public function fetch_import_items($data = [])
+    {
+        if (!get_option('zra_enabled')) {
+            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+        }
+
+        $payload = array_merge([
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id
+        ], $data);
+
+        return $this->try_api_endpoints([
+            '/imports/selectImportItems',
+            '/imports/getImportItems',
+            '/imports/selectImports'
+        ], $payload);
+    }
+
+    public function retrieve_purchases($data = [])
+    {
+        if (!get_option('zra_enabled')) {
+            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+        }
+
+        $payload = array_merge([
+            'tpin' => $this->company_tin,
+            'bhfId' => $this->branch_id
+        ], $data);
+
+        return $this->try_api_endpoints([
+            '/trnsPurchases/selectPurchases',
+            '/purchases/selectPurchases',
+            '/trnsPurchases/getPurchaseList'
+        ], $payload);
+    }
+
+    public function save_purchase($data = [])
+    {
+        return $this->call_api('/trnsPurchases/savePurchase', $data);
+    }
+
+    public function save_non_smart_supplier_purchase($data = [])
+    {
+        return $this->call_api('/trnsPurchases/saveNonSmartSupplierPurchase', $data);
+    }
+
+    public function save_item_composition($data = [])
+    {
+        return $this->call_api('/items/saveItemComposition', $data);
+    }
+
+    public function save_stock_adjustment($data = [])
+    {
+        return $this->call_api('/stock/saveStockAdjustments', $data);
+    }
+
+    public function retry_pending_submissions($limit = 50)
+    {
+        $results = [];
+
+        if (!$this->log_table_exists()) {
+            return $results;
+        }
+
+        $this->db->where_in('status', ['pending', 'failed']);
+        $this->db->where('request_type', 'invoice_submission');
+        $this->db->where('invoice_id >', 0);
+        $this->db->order_by('id', 'ASC');
+        $this->db->limit($limit);
+        $logs = $this->db->get(db_prefix() . 'zra_invoicing_logs')->result();
+
+        foreach ($logs as $log) {
+            $results[$log->invoice_id] = $this->submit_invoice($log->invoice_id);
+        }
+
+        return $results;
+    }
+
     public function update_item($data = [])
     {
         return $this->call_api('/items/updateItem', $data);
@@ -278,59 +399,58 @@ class Zra_api_model extends CI_Model
         $total_amount = 0;
 
         foreach ($items as $item) {
-            $qty = (float) $item['qty'];
-            $rate = (float) $item['rate'];
+            $qty = (float) ($item['qty'] ?? $item['quantity'] ?? 0);
+            $rate = (float) ($item['rate'] ?? $item['unit_price'] ?? $item['price'] ?? 0);
             $line_total = round($qty * $rate, 4);
-            $tax_amount = 0;
-            $vat_category = 'A'; // Default to standard VAT
-            
-            // Calculate tax if applicable
             $tax_rate = $this->determine_tax_rate($item);
-            if ($tax_rate > 0) {
-                $tax_amount = round(($line_total * $tax_rate) / (100 + $tax_rate), 4); // Tax-inclusive calculation
+            $tax_amount = round(($line_total * $tax_rate) / 100, 4);
+            $taxable_amount = round($line_total, 4);
+            $vat_category = $this->determine_tax_category($item);
+            $category_key = 'taxblAmt' . strtoupper($vat_category);
+            $amount_key = 'taxAmt' . strtoupper($vat_category);
+
+            if (!array_key_exists($category_key, $tax_totals)) {
+                $category_key = 'taxblAmtA';
+                $amount_key = 'taxAmtA';
             }
-            
-            $taxable_amount = round($line_total - $tax_amount, 4);
-            
-            // Build line item according to VSDC specification
+
             $invoice_items[] = [
                 'itemSeq' => $item_sequence++,
-                'itemCd' => substr($item['description'], 0, 20), // Max 20 chars as per spec
-                'itemClsCd' => '85121801', // Default UNSPSC code - should be configurable
-                'itemNm' => substr($item['description'], 0, 200), // Max 200 chars
-                'bcd' => '', // Barcode if available
-                'pkgUnitCd' => 'U', // Default packaging unit
-                'pkg' => 0,
-                'qtyUnitCd' => 'U', // Default quantity unit
+                'itemCd' => substr($item['item_code'] ?? ($item['code'] ?? ($item['description'] ?? 'ITEM')), 0, 20),
+                'itemClsCd' => $item['itemClsCd'] ?? $item['class_code'] ?? '85121801',
+                'itemNm' => substr($item['description'] ?? ($item['item_name'] ?? ''), 0, 200),
+                'bcd' => $item['barcode'] ?? '',
+                'pkgUnitCd' => $item['pkgUnitCd'] ?? $item['package_unit'] ?? 'U',
+                'pkg' => $item['pkg'] ?? 0,
+                'qtyUnitCd' => $item['qtyUnitCd'] ?? $item['qty_unit'] ?? 'U',
                 'qty' => round($qty, 4),
                 'prc' => round($rate, 4),
                 'splyAmt' => round($line_total, 4),
-                'dcRt' => 0, // Discount rate
-                'dcAmt' => 0, // Discount amount
-                'isrccCd' => '', // Insurance company code
-                'isrccNm' => '', // Insurance company name
-                'isrcRt' => 0, // Insurance rate
-                'isrcAmt' => 0, // Insurance amount
-                'vatCatCd' => $vat_category, // VAT category
-                'exciseTxCatCd' => null, // Excise tax category
+                'dcRt' => isset($item['discount_rate']) ? round($item['discount_rate'], 4) : 0,
+                'dcAmt' => isset($item['discount_amount']) ? round($item['discount_amount'], 4) : 0,
+                'isrccCd' => $item['isrccCd'] ?? '',
+                'isrccNm' => $item['isrccNm'] ?? '',
+                'isrcRt' => isset($item['isrcRt']) ? round($item['isrcRt'], 4) : 0,
+                'isrcAmt' => isset($item['isrcAmt']) ? round($item['isrcAmt'], 4) : 0,
+                'vatCatCd' => $vat_category,
+                'exciseTxCatCd' => $item['exciseTxCatCd'] ?? null,
                 'vatTaxblAmt' => round($taxable_amount, 4),
-                'exciseTaxblAmt' => 0,
-                'tlTaxblAmt' => 0, // Tourism levy taxable amount
-                'iplTaxblAmt' => 0, // IPL taxable amount
-                'iplAmt' => 0, // IPL amount
-                'tlAmt' => 0, // Tourism levy amount
+                'exciseTaxblAmt' => isset($item['exciseTaxblAmt']) ? round($item['exciseTaxblAmt'], 4) : 0,
+                'tlTaxblAmt' => isset($item['tlTaxblAmt']) ? round($item['tlTaxblAmt'], 4) : 0,
+                'iplTaxblAmt' => isset($item['iplTaxblAmt']) ? round($item['iplTaxblAmt'], 4) : 0,
+                'iplAmt' => isset($item['iplAmt']) ? round($item['iplAmt'], 4) : 0,
+                'tlAmt' => isset($item['tlAmt']) ? round($item['tlAmt'], 4) : 0,
                 'vatAmt' => round($tax_amount, 4),
-                'exciseTxAmt' => 0,
-                'totAmt' => round($line_total, 2)
+                'exciseTxAmt' => isset($item['exciseTxAmt']) ? round($item['exciseTxAmt'], 4) : 0,
+                'totAmt' => round($taxable_amount + $tax_amount, 2)
             ];
-            
-            // Accumulate tax totals by category
-            $tax_totals['taxblAmtA'] += $taxable_amount;
-            $tax_totals['taxAmtA'] += $tax_amount;
-            
+
+            $tax_totals[$category_key] += $taxable_amount;
+            $tax_totals[$amount_key] += $tax_amount;
+
             $total_taxable += $taxable_amount;
             $total_tax += $tax_amount;
-            $total_amount += $line_total;
+            $total_amount += ($taxable_amount + $tax_amount);
         }
 
         array_walk($tax_totals, function (&$amount) {
@@ -343,21 +463,39 @@ class Zra_api_model extends CI_Model
 
         // Standard tax rates as per ZRA specification
         $tax_rates = [
-            'taxRtA' => 16, 'taxRtB' => 16, 'taxRtC1' => 0, 'taxRtC2' => 0, 'taxRtC3' => 0,
-            'taxRtD' => 0, 'taxRtRvat' => 16, 'taxRtE' => 0, 'taxRtF' => 10,
-            'taxRtIpl1' => 5, 'taxRtIpl2' => 0, 'taxRtTl' => 1.5, 'taxRtEcm' => 5,
-            'taxRtExeeg' => 3, 'taxRtTot' => 0
+            'taxRtA' => 0,
+            'taxRtB' => 16,
+            'taxRtC1' => 0,
+            'taxRtC2' => 0,
+            'taxRtC3' => 0,
+            'taxRtD' => 0,
+            'taxRtRvat' => 16,
+            'taxRtE' => 0,
+            'taxRtF' => (float) get_option('zra_tax_rate_standard') ?: 16,
+            'taxRtIpl1' => 5,
+            'taxRtIpl2' => 0,
+            'taxRtTl' => 1.5,
+            'taxRtEcm' => 5,
+            'taxRtExeeg' => 3,
+            'taxRtTot' => 0
         ];
 
         // Build complete request as per VSDC specification
+        $customer_tpin = $this->sanitize_tpin($client->vat ?? $client->tax_number ?? '');
+        $customer_name = trim($client->company ?? ($client->name ?? ($client->firstname . ' ' . $client->lastname ?? '')));
+        $exchange_rate = 1;
+        if (isset($currency->rate) && is_numeric($currency->rate) && (float) $currency->rate > 0) {
+            $exchange_rate = round((float) $currency->rate, 4);
+        }
+
         $request_data = array_merge([
             'tpin' => $this->company_tin,
             'bhfId' => $this->branch_id,
             'orgSdcId' => '', // Original SDC ID - empty for normal invoices
             'orgInvcNo' => 0, // Original invoice number - use 0 for normal invoices
             'cisInvcNo' => $invoice->number,
-            'custTpin' => $this->sanitize_tpin($client->vat ?? ''), // Customer TPIN trimmed/validated
-            'custNm' => $client->company,
+            'custTpin' => $customer_tpin,
+            'custNm' => $customer_name,
             'salesTyCd' => 'N', // Normal sale
             'rcptTyCd' => 'S', // Sales receipt
             'pmtTyCd' => '01', // Cash payment
@@ -376,16 +514,16 @@ class Zra_api_model extends CI_Model
             'cashDcAmt' => 0, // Cash discount amount
             'totAmt' => round($total_amount, 2),
             'prchrAcptcYn' => 'N', // Purchase acceptance
-            'remark' => 'Invoice submitted via PerfexCRM ZRA Module',
+            'remark' => 'Invoice submitted via ZRA integration module',
             'regrId' => 'ADMIN',
             'regrNm' => 'ADMIN',
             'modrId' => 'ADMIN',
             'modrNm' => 'ADMIN',
             'saleCtyCd' => '1', // Sales category code
-            'lpoNumber' => null, // Local purchase order number
-            'currencyTyCd' => $currency->name ?? 'ZMW', // Currency type code
-            'exchangeRt' => '1', // Exchange rate
-            'destnCountryCd' => '', // Destination country code
+            'lpoNumber' => $invoice->lpo_number ?? $invoice->lpo ?? null,
+            'currencyTyCd' => strtoupper($currency->name ?? 'ZMW'), // Currency type code
+            'exchangeRt' => $exchange_rate, // Exchange rate
+            'destnCountryCd' => strtoupper($invoice->destination_country ?? $invoice->country_code ?? ''),
             'dbtRsnCd' => null, // Debit reason code
             'invcAdjustReason' => null, // Invoice adjustment reason
             'itemList' => $invoice_items
@@ -705,14 +843,90 @@ class Zra_api_model extends CI_Model
         return '';
     }
 
+    private function determine_tax_category($item)
+    {
+        $category = '';
+        if (!empty($item['vatCatCd'])) {
+            $category = $item['vatCatCd'];
+        } elseif (!empty($item['tax_category'])) {
+            $category = $item['tax_category'];
+        } elseif (!empty($item['tax_code'])) {
+            $category = $item['tax_code'];
+        } elseif (isset($item['tax']) && $item['tax'] === 0) {
+            return 'A';
+        }
+
+        $category = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) $category));
+        $valid = ['A','B','C1','C2','C3','D','E','ECM','EXEEG','F','IPL1','IPL2','RVAT','TL','TOT'];
+
+        if (in_array($category, $valid, true)) {
+            return $category;
+        }
+
+        return 'F';
+    }
+
     private function determine_tax_rate($item)
     {
-        // Default to standard rate
-        $standard_rate = get_option('zra_tax_rate_standard') ?: 16;
-        
-        // You can implement custom logic here to determine tax rate based on item
-        // For now, return standard rate
-        return $standard_rate;
+        if (isset($item['tax_rate']) && is_numeric($item['tax_rate'])) {
+            return (float) $item['tax_rate'];
+        }
+
+        if (isset($item['tax']) && is_numeric($item['tax'])) {
+            return (float) $item['tax'];
+        }
+
+        $category = $this->determine_tax_category($item);
+        return $this->tax_rate_for_category($category);
+    }
+
+    private function tax_rate_for_category($category)
+    {
+        switch (strtoupper($category)) {
+            case 'A':
+            case 'C1':
+            case 'C2':
+            case 'C3':
+            case 'D':
+            case 'E':
+            case 'IPL2':
+            case 'TOT':
+                return 0;
+            case 'B':
+            case 'F':
+            case 'RVAT':
+                return (float) get_option('zra_tax_rate_standard') ?: 16;
+            case 'ECM':
+                return 5;
+            case 'EXEEG':
+                return 3;
+            case 'IPL1':
+                return 5;
+            case 'TL':
+                return 1.5;
+            default:
+                return (float) get_option('zra_tax_rate_standard') ?: 16;
+        }
+    }
+
+    private function is_offline_failure($response)
+    {
+        if (!is_array($response)) {
+            return false;
+        }
+
+        $message = strtolower($response['message'] ?? '');
+        $error_code = strtoupper($response['error_code'] ?? $response['resultCd'] ?? '');
+
+        if (in_array($error_code, ['CURL_ERROR', 'HTTP_502', 'HTTP_503', 'HTTP_504', '998', '997'], true)) {
+            return true;
+        }
+
+        if (strpos($message, 'connection') !== false || strpos($message, 'timeout') !== false || strpos($message, 'service unavailable') !== false) {
+            return true;
+        }
+
+        return false;
     }
 
     private function determine_tax_code($tax_rate)
@@ -818,6 +1032,20 @@ class Zra_api_model extends CI_Model
                 ];
             }
         }
+    }
+
+    private function try_api_endpoints(array $endpoints, array $payload)
+    {
+        $lastResponse = ['success' => false, 'message' => 'No endpoint responded successfully'];
+
+        foreach ($endpoints as $endpoint) {
+            $lastResponse = $this->call_api($endpoint, $payload);
+            if (isset($lastResponse['success']) && $lastResponse['success']) {
+                return $lastResponse;
+            }
+        }
+
+        return $lastResponse;
     }
 
     private function log_table_exists()

@@ -150,6 +150,15 @@
                                             <button type="button" class="btn btn-success" id="initialize-device">
                                                 <i class="fa fa-cog"></i> <?php echo _l('zra_initialize_device'); ?>
                                             </button>
+                                            <button type="button" class="btn btn-warning" id="retrieve-standard-codes">
+                                                <i class="fa fa-list"></i> <?php echo _l('zra_retrieve_standard_codes'); ?>
+                                            </button>
+                                            <button type="button" class="btn btn-warning" id="retrieve-item-codes">
+                                                <i class="fa fa-tags"></i> <?php echo _l('zra_retrieve_item_classification_codes'); ?>
+                                            </button>
+                                            <button type="button" class="btn btn-default" id="retry-pending-submissions">
+                                                <i class="fa fa-refresh"></i> <?php echo _l('zra_retry_pending_submissions'); ?>
+                                            </button>
                                         </div>
                                         <div class="form-group" id="zra-initialize-status-container" style="display:none;">
                                             <div id="zra-initialize-status" class="m-t-10 text-muted">
@@ -217,10 +226,17 @@
     window.zraSettingsConfig = {
         testUrl: '<?php echo admin_url("zra_martin_invoicing/test_connection"); ?>',
         initializeUrl: '<?php echo admin_url("zra_martin_invoicing/initialize_device"); ?>',
+        retrieveStandardCodesUrl: '<?php echo admin_url("zra_martin_invoicing/get_standard_codes"); ?>',
+        retrieveItemCodesUrl: '<?php echo admin_url("zra_martin_invoicing/get_item_classification_codes"); ?>',
+        retryPendingSubmissionsUrl: '<?php echo admin_url("zra_martin_invoicing/retry_pending_submissions"); ?>',
         connectionSuccessfulText: '<?php echo _l("zra_connection_successful"); ?>',
         connectionFailedText: '<?php echo _l("zra_connection_failed"); ?>',
         initializeSuccessfulText: '<?php echo _l("zra_device_initialization_successful"); ?>',
         initializeFailedText: '<?php echo _l("zra_device_initialization_failed"); ?>',
+        codesRetrievedSuccessText: '<?php echo _l("zra_codes_retrieved_successfully"); ?>',
+        codesRetrievedFailedText: '<?php echo _l("zra_codes_retrieval_failed"); ?>',
+        retryPendingSuccessText: '<?php echo _l("zra_pending_retries_processed"); ?>',
+        retryPendingFailedText: '<?php echo _l("zra_pending_retries_failed"); ?>',
         csrfTokenName: '<?php echo $this->security->get_csrf_token_name(); ?>',
         csrfHash: '<?php echo $this->security->get_csrf_hash(); ?>'
     };

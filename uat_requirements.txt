@@ -1,0 +1,1511 @@
+DOMESTIC TAXES 
+
+Smart Invoice Project 
+
+SMART INVOICE INTEGRATION UAT TEST 
+CASES FOR IN-HOUSE DEVELOPMENT 
+
+TAXPAYER NAME: 
+
+TPIN:  
+
+SYSTEM / PACKAGE NAME:  
+
+VERSION: 
+
+CONTACT PERSON: 
+
+DESIGNATION: 
+
+PHONE NUMBER: 
+
+EMAIL ADDRESS: 
+
+FEBRUARY 2025 
+
+ 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1.0 INTRODUCTION 
+
+Zambia  Revenue  Authority  has  implemented  Smart  Invoice.  Taxpayers  using  approved 
+accounting packages, Point of Sale (POS) and Enterprise Resource Planning (ERP) systems are 
+obliged to  comply with the requirement to use Smart  Invoice by integrating their systems with 
+Smart Invoice. The integration process shall be done using either vendors or taxpayers’ in-house 
+technical teams. 
+
+Therefore, this document serves as the User Acceptance Test (UAT) document for integration of 
+the aforementioned systems with Smart Invoice via the Virtual Sales Data Controller (VSDC). 
+
+2.0 ASSUMPTIONS 
+
+This document is based on the following assumptions: 
+
+1.  The taxpayer is successfully registered for VSDC on Smart Invoice test environment. 
+2.  The functionalities of the test environment should replicate the production environment. 
+3.  The taxpayer is using the latest version of the VSDC. 
+4.  The vendor has passed the preliminary review process. 
+5.  The taxpayer/vendor has submitted the developer’s checklist. 
+
+2.1  List of Abbreviations 
+
+Abbreviation 
+
+Expanded Form 
+
+API 
+ASYCUDA 
+CIS 
+ERP 
+IPL 
+ITX 
+LPO 
+MTV 
+PoS 
+RRP 
+RTX 
+RVAT 
+TL 
+TOT 
+TPIN 
+UAT 
+UNSPSC 
+URL 
+VSDC 
+ZRA 
+
+Application Programming Interface 
+Automated System for Customs Data 
+Certified Invoicing System 
+Enterprise Resource Planning 
+Insurance Premium Levy 
+Income Tax 
+Local Purchase Order 
+Minimum Taxable Value 
+Point of Sale 
+Recommended Retail Price 
+Rental Tax 
+Reverse Value Added Tax 
+Tourism Levy 
+Turnover Tax 
+Taxpayer Identification Number 
+User Acceptance Testing 
+United Nations Standard Products and Services Code 
+Uniform Resource Locator 
+Virtual Sales Data Controller 
+Zambia Revenue Authority 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+2.2  Acceptance Test Scope 
+
+The  acceptance  test  scope  includes  all  commands  of  the  Interface  and  specifications  for  both 
+technical and business requirements as shown below. 
+
+Interface 
+VSDC 
+
+PART A – TECHNICAL AND 
+BUSINESS REQUIREMENTS 
+
+Command/Specification 
+VSDC Initialisation 
+Retrieval of standard codes 
+Item Classification Codes 
+Item Management – Save Item 
+Import Management 
+Purchase  Management-  Smart  Invoice 
+Supplier 
+Purchase  Management-  Non-Smart 
+Invoice Supplier 
+Sales Management - Save Sales 
+Save Item Composition 
+Stock Adjustment 
+Offline Transactions 
+
+PART B–  
+COMPUTERIZED INVOICING 
+ACCOUNTING PAKCAGE 
+VERIFICATION  
+
+Details of Accounting Package 
+verification 
+
+2.3  Method of Acceptance Test 
+
+Follow the test case procedure to check if the expected results are obtained from CIS, VSDC 
+and smart invoice. Record the appropriate result by marking either “pass” or “fail.” 
+
+2.4  Tax Category Codes 
+
+Tax Category Code 
+
+Tax Category Name 
+
+A 
+B 
+C1 
+C2 
+C3 
+D 
+E 
+ECM 
+EXEEG 
+
+Standard Rated 
+Minimum Taxable Value (MTV) 
+Exports 
+Zero-rating Local Purchases Order transactions 
+Zero-rated by nature 
+Exempt 
+Disbursement 
+Excise on Coal 
+Excise Electricity 
+
+ 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+F 
+IPL1 
+IPL2 
+RVAT 
+TL 
+
+10% Statutory Service Charge 
+Insurance Premium Levy 
+Re-Insurance 
+Reverse VAT 
+Tourism Levy 
+
+Follow the test case procedure to check if the expected results are obtained from CIS, VSDC and 
+smart invoice. Record the appropriate result by marking either “pass” or “fail.” 
+
+ 
+ 
+ 
+ 
+ 
+ 
+PART A TECHNICAL AND BUSINESS SPECIFICATION 
+
+TEST CASES LIST 
+
+3.1  VSDC Initialization      
+
+Case No. 
+
+T01A 
+
+Test Purpose 
+
+This case is used to test the initial handshake between the CIS and Smart 
+Invoice through the VSDC. 
+
+Pre-requisites 
+
+1.  CIS should be integrated with VSDC. 
+
+Test Procedure 
+
+1.  The CIS or API testing tool (e.g. Postman) makes a request to the 
+
+VSDC in the prescribed format with the following fields: 
+
+  TPIN, Branch ID, and Device Serial Number. 
+
+2.  Smart invoice responds with Taxpayer details, including the Taxpayers 
+Name, branch details, as well as security keys which will be used for 
+authentication of the device via VSDC. 
+
+3.  ZRA officer checks the status of the VSDC on Smart Invoice. 
+
+Test Verification 
+
+The status of the device should read “Activated”. 
+
+Verifier 
+
+Remarks 
+
+Result 
+
+    □ Pass   □ Fail                                 
+
+ 
+ 
+ 
+ 
+ 
+ 
+3.2  Retrieval of standard codes 
+
+Case No 
+
+T02A 
+
+Test Purpose 
+
+Pre-requisite 
+
+Test Procedure 
+
+Test Verification 
+
+Verifier 
+
+Remarks 
+
+To ensure that the CIS can retrieve the Standard Codes from Smart Invoice, 
+which are either mapped or stored locally for subsequent use in interactions 
+with the VSDC. 
+1.The CIS should be initialized. 
+2.The VSDC should be active. 
+3.The Codes should be predefined on smart invoice. 
+The CIS makes a request to retrieve the codes from smart invoice through the 
+VSDC. 
+1.The CIS should successfully retrieve and store the codes. 
+2.The retrieved codes should be either mapped or stored locally for utilization 
+in subsequent interactions. 
+3.Request and response is shown in the smart invoice logs. 
+
+Result 
+
+    □ Pass   □ Fail                                 
+
+3.3  Item Classification Codes 
+
+Case No. 
+
+T03A 
+
+To ensure that the item classification codes are uploaded to the CIS. 
+
+1.The CIS should be initialized. 
+2.The VSDC should be active. 
+3.The Item Classification Codes should be predefined on smart invoice. 
+4.The item Classification Codes are available in excel. 
+1.The CIS should make a call to retrieve the codes from Smart Invoice or the 
+Tester uploads the items Classification Codes document to CIS. 
+
+1.The CIS should successfully retrieve and store the item classification codes. 
+2.Request and response is shown in the smart invoice logs. 
+3.The CIS should be able to utilize item classification codes. 
+
+Result 
+
+    □ Pass   □ Fail                                      
+
+Test Purpose 
+
+Pre-requisites 
+
+Test Procedure 
+
+Test Verification 
+
+Verifier 
+
+Remarks 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.4  Item Management – Save Item 
+
+Case No 
+
+T04A – Business Part 
+
+T04A– Technical Part 
+
+Test Purpose 
+
+1.  To ensure that the CIS is able to save and transmit product and service items with 
+
+the required data fields. 
+
+Pre-requisite 
+
+1.  The item classification and standard codes must be stored and mapped on the CIS. 
+
+Test 
+Procedure 
+
+Test 
+Verification 
+
+Verifier 
+
+1.  The user adds items for all different Tax categories. 
+
+1.  The saved items must contain the 
+
+1.  The saved item(s) should be viewable 
+
+on the CIS and smart invoice. 
+2.  The codes passed align with the 
+
+provided codes in the select codes API 
+
+3.  Request and response is shown in the 
+
+smart invoice logs. 
+
+following data fields; 
+
+a)  Item Code  
+b)  Class Code (UNSPSC) 
+c)  Item Name  
+d)  Item Type  
+e)  Country of Origin  
+f)  Package Unit  
+g)  Unit of Measure 
+h)  Selling Price 
+i)  Applicable Tax Category 
+j)  RRP for MTV products 
+
+Result 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+Remarks 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.5  Import Management – Get and update Imports 
+
+Case No 
+
+Test 
+Purpose 
+
+Pre-
+requisite 
+
+Test 
+Procedure 
+
+T05A – Business Part 
+
+T05A– Technical Part 
+
+1.  To ensure that the CIS is able to retrieve and save the imported items from smart 
+
+invoice. 
+
+1.  The imported items should have been shared from ASYCUDA to smart 
+
+invoice. 
+
+1.  The  CIS  makes  a  request  to  retrieve  imported  items  from  smart  invoice 
+
+through the VSDC. 
+
+2.  The user approves the retrieved imported item(s). 
+3.  The user updates the quantities accordingly. 
+4.  The user rejects the retrieved imported item(s). 
+
+Test 
+Verification 
+
+1.  The imported items are saved on 
+
+1.  The CIS should successfully retrieve and 
+
+the CIS. 
+
+save the imported items. 
+
+2.  The quantities for the imported 
+
+2.  Request and response is shown in the 
+
+items are adjusted accordingly on 
+both the CIS and Smart Invoice. 
+
+smart invoice logs. 
+
+3.  The CIS updates the status of the import 
+item(s) upon approval or rejection. 
+4.  The quantities for the imported items are 
+adjusted accordingly on both the CIS and 
+Smart Invoice. 
+
+Verifier 
+
+Result 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+Remarks 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.6 Purchases Management (Supplier on Smart Invoice) 
+
+Case No 
+
+Test Purpose 
+
+T06A – Business Part 
+
+T06A – Technical Part 
+
+1.  To ensure that the CIS can retrieve and save purchases from smart invoice. 
+
+Pre-requisite 
+
+1.  The supplier and purchaser must be registered on Smart Invoice. 
+
+Test Procedure 
+
+1.  The supplier issues an invoice to the purchaser with the required details. 
+2.  The CIS makes a request to retrieve purchases from smart invoice through 
+
+the VSDC. 
+
+3.  The  user  either  approves  or  rejects  the  purchases  retrieved  from  Smart 
+
+Test Verification 
+
+Verifier 
+
+Invoice. 
+
+1.  The purchase details 
+are shared with the 
+purchaser. 
+
+2.  The quantities for the 
+purchased items are 
+adjusted accordingly 
+on both the CIS and 
+Smart Invoice. 
+
+1.  The CIS should successfully retrieve and 
+
+save the purchases. 
+
+2.  Request and response is shown in the smart 
+
+invoice logs. 
+
+3.  The CIS updates the status of the purchases 
+
+upon approval or rejection. 
+
+4.  The quantities for the purchased items are 
+adjusted accordingly on both the CIS and 
+Smart Invoice. 
+
+Result 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+Remarks 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.7 Purchases Management (Supplier not on Smart Invoice) 
+
+Case No 
+
+Test Purpose 
+
+Pre-requisite 
+
+Test Procedure 
+
+Test Verification 
+
+Verifier 
+
+Result 
+
+Remarks 
+
+T07A – Business Part  T07A – Technical Part 
+
+1.  To ensure that the CIS can save purchases from 
+
+a non-smart invoice supplier. 
+
+1.  The purchaser must be registered on Smart 
+
+Invoice. 
+
+2.  The supplier invoice must be issued outside 
+
+Smart Invoice. 
+
+1.  The  supplier  issues  an  invoice  to  the  purchaser 
+
+with the required details. 
+
+2.  The  user  processes  the  purchase  invoice  onto 
+
+Smart Invoice. 
+
+1.  The purchase 
+invoice is 
+saved on Smart 
+Invoice. 
+
+1.  The purchase details 
+are saved on the CIS 
+and transmitted to 
+Smart Invoice. 
+
+2.  Request and response 
+are shown in the smart 
+invoice logs. 
+
+3.  The purchased item(s) 
+quantity on both the 
+CIS and Smart invoice 
+are adjusted 
+accordingly. 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.8 Sales Management – Save Sales 
+
+Case No 
+
+T08A – Business Part 
+
+T08A – Technical Part 
+
+Test Purpose 
+
+1.  To ensure that the CIS is able to record and transmit sales transactions to smart 
+
+invoice. 
+
+Pre-requisite 
+
+1.  The TPIN used for testing must be registered for all eligible Tax types on Smart 
+
+Test 
+Procedure 
+
+Invoice. 
+
+2.  Each VAT tax category must be mapped to at least one item. 
+3.  For MTV sales; 
+4.  MTV products must be stocked-in with the selling price both below and above 
+
+RRP. 
+
+5.  For LPO sales; 
+6.  The Taxpayer must be in possession of a valid LPO Certificate. 
+7.  Standard-rated items must have been stocked in. 
+8.  For Export sales; 
+
+a)  Standard-rated items must have been stocked in. 
+b)  The place of delivery for the goods or services should be outside Zambia. 
+
+9.  For RVAT sale; 
+
+a)  The principals must be registered on TaxOnline. 
+
+1.  The user generates a B2B normal sale for items with the following tax categories: (A, 
+
+B, C3, D, E) 
+
+2.  The user generates a normal sale for items with a cash discount with the following tax 
+
+categories: (A, B, C3, D, E) 
+
+3.  The user generates a normal  sale for items  with a trade discount with  the following 
+
+tax categories: (A, B, C3, D, E) 
+
+4.  The  user  generates  a  normal  forex  sale  for  items  with  the  following  tax  categories: 
+
+(A, B, C3, D, E)  
+
+5.  The  user  generates  a  normal  sale  for  two  MTV  items  at  the  price  below  RRP  and 
+
+above RRP. 
+
+6.  The user generates an LPO invoice for items with the following tax categories: (A, B, 
+
+C3, D, E)  
+
+7.  The user generates an Export invoice for items with the following tax categories: (A, 
+
+B, C3, D, E) 
+
+8.  The user generates a normal sale for A TPIN registered for Excise on Electricity. 
+9.  The user generates a normal sale for A TPIN registered for Excise on Coal. 
+10. The user generates a normal sale for A TPIN registered for TOT. 
+11. The user generates a normal sale for A TPIN registered for ITX. 
+12. The user generates a normal sale for A TPIN registered for RTX. 
+13. The user generates a full credit note for a normal sale, LPO sale and Export sale. 
+14. The user generates a partial credit note for a normal sale, LPO sale and Export sale. 
+15. The user generates a debit note if the debit note feature has been implemented.  
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Test 
+Verification 
+
+1.  All normal sales invoices are issued with 
+
+1.  For Forex transactions, the set 
+
+exchange rate and currency code 
+have been transmitted to Smart 
+Invoice. 
+
+2.  For LPO invoices, the correct 
+
+LPO Number has been 
+transmitted to Smart Invoice. 
+3.  The sales transactions reflect on 
+both the CIS and Smart Invoice. 
+
+4.  The quantities of the affected 
+
+items adjust accordingly on both 
+CIS and Smart Invoice. 
+
+the correct tax computations and reflect the 
+customer TPIN and name. 
+
+2.  The quantities of the affected items will 
+
+adjust accordingly on both CIS and Smart 
+Invoice. 
+
+3.  For Forex transactions; 
+
+a)  The Kwacha amount transmitted to 
+Smart Invoice corresponds to the 
+set exchange rate. 
+
+4.  For LPO invoices; 
+
+a)  The LPO Number should reflect on 
+
+the invoice printout. 
+
+b)  The invoice amounts should be 
+
+exclusive of tax. 
+
+5.  For Export invoices; 
+
+a)  Country of destination reflects on 
+
+the tax invoice. 
+
+b)  The invoice amounts should be 
+
+exclusive of tax. 
+
+The invoice print outs should have the following 
+features: 
+
+1. Clients TPIN, Registered Name, and address 
+reflect on the tax invoice, tax credit note and debit 
+note. 
+
+2. On the tax invoice, the following must reflect: 
+
+a.  The words ‘tax invoice’ displayed in a 
+
+prominent place;  
+
+b. 
+
+the registered supplier’s TPIN, name, and 
+address displayed;   
+
+c. 
+
+the invoice issue date displayed;  
+
+d. 
+
+e. 
+
+f. 
+
+the invoice number displayed in the format 
+INVSDCNUMBER/INVOICE NUMBER;   
+
+the customer’s TPIN, name and address 
+displayed, where applicable;  
+
+a description sufficient to identify the 
+goods or services supplied which includes; 
+
+ 
+ 
+ 
+ 
+g. the quantity of the goods or the extent of the 
+service supplied 
+
+h.  the price of the goods or services 
+
+i. 
+
+the tax exclusive amount charged for each 
+description of goods and services supplied 
+
+j. 
+
+the Tax rate(s) displayed 
+
+1.  Tax information;  
+
+k.  the total amount charged on the invoice, 
+
+exclusive of tax displayed, 
+
+l. 
+
+ the rate and amount of discount given if 
+any is displayed, 
+
+m.  the total tax charged is displayed, 
+
+n.  the total amount charged on the invoice, 
+
+inclusive of tax is displayed. 
+
+2.  SDC information;  
+
+a) QR Code OR URL, 
+
+b) SDC ID, 
+
+c) VSDC date, 
+
+d) Internal data and Fiscal signature. 
+
+3). Foreign Currency Invoices must show currency 
+Notation and exchange rates. 
+
+4. Tax Credit Note must reflect all features of the 
+Tax Invoice but must read “Tax Credit Note” with 
+the following additional features: 
+
+a.  Original Invoice number for the 
+
+transaction being reversed. These 
+are for cross-referencing and must 
+be clearly labeled. 
+
+b)   Reason for reversing a transaction must 
+
+reflect on the credit note. 
+
+c)  the credit note number displayed in the 
+
+ 
+ 
+ 
+format 
+CRNSDCNUMBER/CREDITNOTE 
+NUMBER;   
+
+d)  Amount of the credit. 
+
+5. Debit Note must reflect all features of the Tax 
+Invoice but must read “Debit Note” with the 
+following additional features: 
+
+a.  Original Invoice number for the 
+
+transaction being adjusted. These 
+are for cross-referencing and must 
+be clearly labeled. 
+
+b)  Reason for the adjusting the transaction 
+
+must reflect on the debit note. 
+
+c)  the invoice number displayed in the format 
+
+DBTSDCNUMBER/DEBITNOTE 
+NUMBER;   
+
+d)  Amount of the debit. 
+
+Verifier 
+
+Result-
+Normal Sale 
+
+□ Pass 
+
+Result-LPO 
+
+□ Pass 
+
+□ Pass 
+
+□ Pass 
+
+□ Pass 
+
+Result-
+Export 
+
+Result – 
+Credit Note 
+
+Result –
+Debit Note 
+
+Remarks 
+
+□ Fail 
+
+□ Fail 
+
+□ Fail 
+
+□ Fail 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.9  Save Item Composition (Optional) 
+
+Case No. 
+
+T09A 
+
+Test Purpose 
+
+Pre-requisites 
+
+Test Procedure 
+
+Test Verification 
+
+Verifier 
+
+Remarks 
+
+1.  To ensure that the CIS is able to send and save items utilized in 
+
+processing or repackaging procedures. 
+
+1.  The CIS should be initialized. 
+2.  The VSDC should be active. 
+3.  The item(s) should be saved on the CIS. 
+1.  An item(s) is processed or repackaged. 
+
+1.  1.The processed or repackaged item(s) should be saved and the 
+
+quantities are adjusted accordingly. 
+
+2.  2.The raw material or the initial package quantities are adjusted 
+
+accordingly. 
+
+3.  3.Request and response is shown in the smart invoice logs. 
+
+Result 
+
+    □ Pass   □ Fail                                      
+
+ 
+ 
+ 
+ 
+ 
+ 
+3.10 Stock Adjustments – Save Stock Item – Save Stock Master 
+
+Case No 
+
+Test Purpose 
+
+T10A – Business Part 
+
+T10A – Technical Part 
+
+1.  To ensure that the CIS is able to adjust and correctly transmit stock quantities 
+
+for all types of adjustments. 
+
+Pre-requisite 
+
+1.  The Stock item must be registered on the CIS. 
+
+Test Procedure 
+
+Test Verification 
+
+1.  The user makes the following stock adjustments; 
+2.  Adjustment In and Out 
+3.  Branch Transfer In and Out 
+4.  Processing In and Out 
+5.  Disposals 
+1.  Item stock quantities 
+adjusted accordingly 
+on Smart Invoice 
+under the following 
+stock management 
+sub-menus; 
+2.  Stock Inventory 
+3.  Stock In history 
+4.  Stock Out history 
+5.  Stock 
+
+invoice logs. 
+
+1.  Request and response is shown in the smart 
+
+2.  The correct sarTyCd, quantities and reason 
+
+for adjustment are passed in accordance with 
+the invoking process. 
+
+3.  The reconciled stock balance is posted after 
+
+the adjustment is made. 
+
+Opening/Closing 
+
+Verifier 
+
+Result 
+
+□ Pass 
+
+□ Fail 
+
+□ Pass 
+
+□ Fail 
+
+Remarks 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3.11  Offline Transactions 
+
+Case No  
+
+Test Purpose 
+
+T11A 
+
+1.  This case is used to test whether the CIS can processs transactions whilst 
+
+the VSDC is offline. 
+
+Pre-requisite 
+
+1.  Service where the VSDC is hosted must be disabled. 
+
+Test Procedure 
+
+1.  The taxpayer must shutdown the service where the VSDC is running 
+2.  The taxpayer processes a sales transaction 
+3.  The taxpayer re-enables the service where the VSDC is running 
+4.  The taxpayer again processes a sales transaction 
+
+Test Verification 
+
+1.  Invoice should not be created on the CIS 
+2.  The invoice should be created in scenario 2 
+
+Verifier 
+
+Remarks 
+
+Result 
+
+    □ Pass   □ Fail                                      
+
+ 
+ 
+ 
+  
+ 
+  
+ 
+  
+  
+ 
+ 
+ 
+PART B: COMPUTERISED INVOICING ACCOUNTING PACKAGE VERIFICATION 
+
+4.1 
+
+Details of Accounting Package Verification:  
+
+REF   QUERY / PARAMETER CHECK  
+
+YES  
+
+NO  
+
+(tick) 
+
+(tick)  
+
+  
+
+1  
+
+2  
+
+3  
+
+Confirmation that invoice numbers uniquely and system generated  
+
+Confirmation that invoice numbers are consecutive  
+
+Confirmation that the user CANNOT manipulate invoice numbers once 
+initialized/posted  
+
+4  
+
+Confirmation that the tax invoice has the minimum required features as follows:  
+
+(i)  
+
+the words ‘tax invoice’ displayed in a prominent place;  
+
+(ii)  
+
+the registered supplier’s name, and address;   
+
+(iii)  
+
+registered supplier’s taxpayer identification number;  
+
+(iv)  
+
+the date of issue of the invoice;  
+
+(v)  
+
+the number of the invoice taken from a consecutive series;   
+
+(vi)  
+
+the customer’s name and address;  
+
+(vii)  
+
+the customer’s Taxpayer Identification Number;   
+
+(viii) a description sufficient to identify the goods or services supplied which 
+includes the quantity of the goods or the extent of the service supplied, the tax 
+exclusive amount charged for each description of goods and services supplied and 
+the rate or rates  
+
+(ix)  
+
+ of tax; and indicate: -  
+
+the total amount charged on the invoice, exclusive of tax;  
+
+the rate and amount of discount given if any;  
+
+the total tax charged; and  
+
+the total amount charged on the invoice, inclusive of tax  
+
+5  
+
+Confirmation that the user CANNOT amend or edit the invoice details once the 
+invoice has been printed  
+
+ 
+ 
+ 
+  
+  
+  
+  
+  
+  
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+ 
+  
+  
+  
+ 
+  
+  
+  
+ 
+  
+  
+  
+ 
+  
+  
+  
+  
+  
+6  
+
+7  
+
+8  
+
+9  
+
+Confirmation that the user CANNOT delete the invoice details once the invoice has 
+been printed  
+
+Confirmation that the user CANNOT re-print the ORIGINAL invoices with same 
+details without showing them as copy/duplicate invoices  
+
+Confirmation that the system has an audit trail showing original details and any 
+amendments made  
+
+Confirmation that the system provides basic VAT transaction reports showing 
+invoice number, invoice date, customer name, description of goods/services, value 
+of goods/services and VAT amount   
+
+10  
+
+Confirmation that the data files CANNOT be accessible via third party packages  
+
+11  
+
+Confirmation that there is a provision for a backup in case of a power/system failure     
+
+12  
+
+Confirmation that there is user authentication through provision of user level 
+passwords  
+
+13  
+
+Indicate / List down any management reports produced by your system  
+
+1.  ……………………………………………………………………… 
+
+2.  ……………………………………………………………………… 
+
+3.  ……………………………………………………………………… 
+
+4.  ……………………………………………………………………… 
+
+5.  ……………………………………………………………………… 
+
+14  
+
+Confirmation that the system is able to produce excel / Access spreadsheets of the 
+VAT Input Schedules in soft copy format with details as in (9) above.  
+
+15  
+
+Confirmation that the system generates credit notes with features of a tax invoice  
+
+16  
+
+Confirmation that the system Does NOT allow users to access the data tables for 
+editing directly or via third party applications   
+
+17  
+
+Confirm whether the products of this system feed into another system.  
+
+18  
+
+If yes to Query 17, then confirm whether this is done directly   
+
+19  
+
+20  
+
+If yes to Query 17, confirm the editing, manipulation and deletion restrictions 
+described in number 3, 5 and 6 above apply.  
+
+Confirm whether manual invoicing will be used alongside the computerized 
+package, upon approval.   
+
+ 
+ 
+ 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+REF   QUERY / PARAMETER CHECK  
+
+Disclaimer:    
+
+YES  
+
+NO  
+
+(tick)  
+
+(tick)  
+
+The information on this Form and any attachments are confidential and intended solely for the attention and use of 
+Zambia Revenue Authority (ZRA). This information may be subject to legal or other privilege or may otherwise be 
+protected by law. It must not be disclosed to any person without permission from ZRA. If you are not the intended 
+stakeholder, you are not authorized to and must not disclose; copy; distribute or retain this information or any part of 
+it. If you have received this information in error, please notify ZRA immediately by email or telephone or in person.   
+
+3.4 Mandatory Attachments:  
+
+1.  Copy of invoice from UAT  
+
+2.  Copy of Credit Note invoice from UAT  
+
+3.  Copy of Credit Note invoice from UAT  
+
+Testers’ Names:      
+
+Names:                                                                             Signature: 
+
+I…………..…………………….                                              I…………..……………..…… 
+
+II…………..…………………..                                                II…………..…………………  
+
+III…………………..................                                                 III…………………................ 
+
+Date: ……………………… 
+
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+       
+   
+ 
+ 
+Taxpayer Representative/ Vendor:  
+
+Names:                                                                         Signature: 
+
+I…………..…………………….                                              I…………..……………..…… 
+
+II…………..…………………..                                                II…………..…………………  
+
+III…………………..................                                                 III…………………................ 
+
+Date: ……………………… 
+
+ 
+ 
+ 
+ 
+ 
+ 
+       
+   
+ 
+
