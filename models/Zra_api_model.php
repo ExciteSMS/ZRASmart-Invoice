@@ -465,14 +465,27 @@ class Zra_api_model extends CI_Model
         }
     }
 
+    private function log_table_exists()
+    {
+        return $this->db->table_exists(db_prefix() . 'zra_invoicing_logs');
+    }
+
     public function log_transaction($data)
     {
+        if (!$this->log_table_exists()) {
+            return 0;
+        }
+
         $this->db->insert(db_prefix() . 'zra_invoicing_logs', $data);
         return $this->db->insert_id();
     }
 
     public function get_invoice_log($invoice_id, $status = null)
     {
+        if (!$this->log_table_exists()) {
+            return null;
+        }
+
         $this->db->where('invoice_id', $invoice_id);
         if ($status) {
             $this->db->where('status', $status);
@@ -483,6 +496,10 @@ class Zra_api_model extends CI_Model
 
     public function get_recent_logs($limit = 10)
     {
+        if (!$this->log_table_exists()) {
+            return [];
+        }
+
         $this->db->select('zil.*, i.number as invoice_number');
         $this->db->from(db_prefix() . 'zra_invoicing_logs zil');
         $this->db->join(db_prefix() . 'invoices i', 'i.id = zil.invoice_id', 'left');
@@ -493,29 +510,49 @@ class Zra_api_model extends CI_Model
 
     public function get_total_submissions()
     {
+        if (!$this->log_table_exists()) {
+            return 0;
+        }
+
         return $this->db->count_all_results(db_prefix() . 'zra_invoicing_logs');
     }
 
     public function get_successful_submissions()
     {
+        if (!$this->log_table_exists()) {
+            return 0;
+        }
+
         $this->db->where('status', 'success');
         return $this->db->count_all_results(db_prefix() . 'zra_invoicing_logs');
     }
 
     public function get_failed_submissions()
     {
+        if (!$this->log_table_exists()) {
+            return 0;
+        }
+
         $this->db->where('status', 'failed');
         return $this->db->count_all_results(db_prefix() . 'zra_invoicing_logs');
     }
 
     public function get_pending_submissions()
     {
+        if (!$this->log_table_exists()) {
+            return 0;
+        }
+
         $this->db->where('status', 'pending');
         return $this->db->count_all_results(db_prefix() . 'zra_invoicing_logs');
     }
 
     public function get_invoice_zra_status($invoice_id)
     {
+        if (!$this->log_table_exists()) {
+            return ['status' => 'not_submitted', 'message' => 'Not submitted to ZRA'];
+        }
+
         $log = $this->get_invoice_log($invoice_id);
         
         if (!$log) {
@@ -565,6 +602,10 @@ class Zra_api_model extends CI_Model
     public function fetch_all_pending_invoices()
     {
         // Get all invoices that have been submitted but are still pending
+        if (!$this->log_table_exists()) {
+            return [];
+        }
+
         $this->db->where('status', 'pending');
         $this->db->or_where('status', 'failed');
         $pending_logs = $this->db->get(db_prefix() . 'zra_invoicing_logs')->result();
@@ -601,11 +642,13 @@ class Zra_api_model extends CI_Model
         $this->db->where('i.status !=', 5); // Not cancelled
         
         // Exclude invoices that have successful submissions
-        $this->db->where('i.id NOT IN (
-            SELECT DISTINCT invoice_id 
-            FROM ' . db_prefix() . 'zra_invoicing_logs 
-            WHERE status = "success" AND invoice_id > 0
-        )');
+        if ($this->log_table_exists()) {
+            $this->db->where('i.id NOT IN (
+                SELECT DISTINCT invoice_id 
+                FROM ' . db_prefix() . 'zra_invoicing_logs 
+                WHERE status = "success" AND invoice_id > 0
+            )');
+        }
         
         $this->db->order_by('i.date', 'DESC');
         $this->db->limit($limit);
@@ -615,6 +658,10 @@ class Zra_api_model extends CI_Model
 
     public function get_logs_by_type($type, $limit = 10)
     {
+        if (!$this->log_table_exists()) {
+            return [];
+        }
+
         $this->db->where('request_type', $type);
         $this->db->order_by('id', 'DESC');
         $this->db->limit($limit);
@@ -644,6 +691,10 @@ class Zra_api_model extends CI_Model
 
     private function update_invoice_status_from_fetch($log_id, $fetch_data)
     {
+        if (!$this->log_table_exists()) {
+            return false;
+        }
+
         $update_data = [
             'updated_at' => date('Y-m-d H:i:s')
         ];
@@ -666,6 +717,7 @@ class Zra_api_model extends CI_Model
         
         $this->db->where('id', $log_id);
         $this->db->update(db_prefix() . 'zra_invoicing_logs', $update_data);
+        return true;
     }
 }
 
