@@ -266,6 +266,26 @@ class Zra_api_model extends CI_Model
         return $response;
     }
 
+    public function reset_device_initialization()
+    {
+        if (!get_option('zra_enabled')) {
+            return ['success' => false, 'message' => 'ZRA integration is disabled'];
+        }
+
+        update_option('zra_device_initialized', '0');
+        update_option('zra_sdc_id', '');
+        update_option('zra_mrc_number', '');
+
+        return [
+            'success' => true,
+            'message' => 'Device initialization state reset successfully.',
+            'identifiers' => [
+                'sdc_id' => '',
+                'mrc_number' => ''
+            ]
+        ];
+    }
+
     public function get_sales_principals($data = [])
     {
         return $this->call_api('/trnsSales/selectPrincip', $data);

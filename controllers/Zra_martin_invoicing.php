@@ -174,6 +174,36 @@ class Zra_martin_invoicing extends AdminController
         echo json_encode($result);
     }
 
+    public function reset_device_initialization()
+    {
+        if (!has_permission('zra_invoicing', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $result = $this->zra_api_model->reset_device_initialization();
+
+        $this->zra_api_model->log_transaction([
+            'invoice_id' => 0,
+            'request_type' => 'reset_device_initialization',
+            'request_data' => json_encode([
+                'api_url' => get_option('zra_api_url'),
+                'tpin' => get_option('zra_company_tin'),
+                'bhfId' => get_option('zra_branch_id'),
+                'dvcSrlNo' => get_option('zra_device_serial')
+            ]),
+            'response_data' => json_encode($result),
+            'status' => (isset($result['success']) && $result['success']) ? 'success' : 'failed',
+            'error_code' => $result['resultCd'] ?? ($result['error_code'] ?? null),
+            'error_message' => $result['message'] ?? null
+        ]);
+
+        $result['csrf_token_name'] = $this->security->get_csrf_token_name();
+        $result['csrf_hash'] = $this->security->get_csrf_hash();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($result);
+    }
+
     public function get_standard_codes()
     {
         if (!has_permission('zra_invoicing', '', 'view')) {

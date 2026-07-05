@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var testButton = document.getElementById('test-api-connection');
     var initializeButton = document.getElementById('initialize-device');
     var fetchIdentifiersButton = document.getElementById('fetch-device-identifiers');
+    var resetInitializationButton = document.getElementById('reset-device-initialization');
 
     if (typeof console !== 'undefined') {
         console.log('ZRA settings JS loaded');
@@ -213,6 +214,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Fetching SDC ID and MRC Number...',
                 zraSettingsConfig.fetchDeviceIdentifiersSuccessText,
                 zraSettingsConfig.fetchDeviceIdentifiersFailedText
+            );
+        });
+    }
+
+    if (resetInitializationButton) {
+        resetInitializationButton.addEventListener('click', function() {
+            zraExecutePost(
+                zraSettingsConfig.resetDeviceInitializationUrl,
+                resetInitializationButton,
+                'Resetting device initialization...',
+                zraSettingsConfig.resetDeviceInitializationSuccessText,
+                zraSettingsConfig.resetDeviceInitializationFailedText
             );
         });
     }
