@@ -241,8 +241,10 @@ class Zra_api_model extends CI_Model
 
         $response['identifiers'] = $identifiers;
 
+        $resultCode = (string) ($response['resultCd'] ?? '');
         $message = strtolower(trim((string) ($response['message'] ?? '')));
-        $alreadyInitialized = strpos($message, 'already') !== false
+        $alreadyInitialized = $resultCode === '902'
+            || strpos($message, 'already') !== false
             || strpos($message, 'installed') !== false
             || strpos($message, 'initialized') !== false;
 
@@ -1170,7 +1172,7 @@ class Zra_api_model extends CI_Model
             }
         }
 
-        $sdcId = $this->find_value_by_aliases($sources, ['sdcid', 'sdc_id', 'orgsdcid', 'org_sdc_id']);
+        $sdcId = $this->find_value_by_aliases($sources, ['sdcid', 'sdicid', 'sdc_id', 'orgsdcid', 'org_sdc_id']);
         $mrcNumber = $this->find_value_by_aliases($sources, ['mrcno', 'mrc_no', 'mrcnumber', 'mrc_number', 'mrcnum']);
 
         return [

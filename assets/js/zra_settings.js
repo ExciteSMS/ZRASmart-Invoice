@@ -68,7 +68,12 @@ function zraMessageText(value) {
         }
     }
 
-    return String(value || 'Unknown error');
+    var text = String(value || 'Unknown error');
+    text = text.replace(/\s+/g, ' ').trim();
+    if (text.length > 400) {
+        text = text.slice(0, 400) + '...';
+    }
+    return text;
 }
 
 function zraUpdateDeviceIdentifiers(responseData) {
