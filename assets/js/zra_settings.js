@@ -51,6 +51,26 @@ function zraParseResponseText(responseText) {
     }
 }
 
+function zraMessageText(value) {
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    if (value && typeof value.message === 'string') {
+        return value.message;
+    }
+
+    if (value && typeof value === 'object') {
+        try {
+            return JSON.stringify(value);
+        } catch (e) {
+            return 'Unexpected error object';
+        }
+    }
+
+    return String(value || 'Unknown error');
+}
+
 function zraUpdateDeviceIdentifiers(responseData) {
     if (!responseData || !responseData.identifiers) {
         return;
@@ -71,7 +91,9 @@ function zraUpdateDeviceIdentifiers(responseData) {
 function zraHandleAjaxError(btn, title, errorText, responseText) {
     zraSetInitializeStatus('error', title);
     if (typeof alert_float !== 'undefined') {
-        alert_float('danger', title + ': ' + errorText + '\n' + responseText);
+        var normalizedErrorText = zraMessageText(errorText);
+        var normalizedResponse = zraMessageText(responseText);
+        alert_float('danger', title + ': ' + normalizedErrorText + '\n' + normalizedResponse);
     }
     zraResetButton(btn);
 }
@@ -140,15 +162,16 @@ function zraExecutePost(url, btn, loadingText, successText, errorText) {
 
         zraSetInitializeStatus('error', errorText + ': ' + (data.message || 'Unknown error'));
         if (typeof alert_float !== 'undefined') {
-            alert_float('danger', errorText + ': ' + (data.message || 'Unknown error'));
+            alert_float('danger', errorText + ': ' + zraMessageText(data.message || 'Unknown error'));
         }
         return Promise.reject(data);
     })
     .catch(function(error) {
+        var normalizedMessage = zraMessageText(error && error.message ? error.message : error);
         if (typeof error === 'object' && error.raw) {
-            zraHandleAjaxError(btn, errorText, error.message || 'Request failed', error.raw);
+            zraHandleAjaxError(btn, errorText, normalizedMessage || 'Request failed', error.raw);
         } else {
-            zraHandleAjaxError(btn, errorText, error.message || 'Request failed', error);
+            zraHandleAjaxError(btn, errorText, normalizedMessage || 'Request failed', error);
         }
     })
     .finally(function() {

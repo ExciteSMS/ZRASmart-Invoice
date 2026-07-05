@@ -224,6 +224,36 @@ class Zra_api_model extends CI_Model
     {
         $response = $this->initialize_device();
 
+        $identifiers = $this->extract_device_identifiers($response);
+        if (empty($identifiers['sdc_id'])) {
+            $identifiers['sdc_id'] = get_option('zra_sdc_id') ?: '';
+        }
+        if (empty($identifiers['mrc_number'])) {
+            $identifiers['mrc_number'] = get_option('zra_mrc_number') ?: '';
+        }
+
+        if (!empty($identifiers['sdc_id'])) {
+            update_option('zra_sdc_id', $identifiers['sdc_id']);
+        }
+        if (!empty($identifiers['mrc_number'])) {
+            update_option('zra_mrc_number', $identifiers['mrc_number']);
+        }
+
+        $response['identifiers'] = $identifiers;
+
+        $message = strtolower(trim((string) ($response['message'] ?? '')));
+        $alreadyInitialized = strpos($message, 'already') !== false
+            || strpos($message, 'installed') !== false
+            || strpos($message, 'initialized') !== false;
+
+        if ((!isset($response['success']) || !$response['success']) && $alreadyInitialized) {
+            if (!empty($identifiers['sdc_id']) || !empty($identifiers['mrc_number'])) {
+                $response['success'] = true;
+                $response['resultCd'] = $response['resultCd'] ?? '000';
+                $response['message'] = 'Device already initialized. Identifiers fetched successfully.';
+            }
+        }
+
         if (empty($response['identifiers']) || !is_array($response['identifiers'])) {
             $response['identifiers'] = [
                 'sdc_id' => get_option('zra_sdc_id') ?: '',
