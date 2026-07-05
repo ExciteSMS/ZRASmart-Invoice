@@ -136,6 +136,18 @@
                                                 <?php } ?>
                                             </div>
                                         </div>
+
+                                        <div class="form-group">
+                                            <label for="zra_sdc_id" class="control-label clearfix"><?php echo _l('zra_sdc_id'); ?></label>
+                                            <?php echo render_input('zra_sdc_id', '', get_option('zra_sdc_id'), 'text', ['readonly' => true]); ?>
+                                            <small class="help-block"><?php echo _l('zra_sdc_id_help'); ?></small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="zra_mrc_number" class="control-label clearfix"><?php echo _l('zra_mrc_number'); ?></label>
+                                            <?php echo render_input('zra_mrc_number', '', get_option('zra_mrc_number'), 'text', ['readonly' => true]); ?>
+                                            <small class="help-block"><?php echo _l('zra_mrc_number_help'); ?></small>
+                                        </div>
                                         
                                         <div class="form-group">
                                             <label for="zra_timeout" class="control-label clearfix"><?php echo _l('zra_timeout'); ?></label>
@@ -149,6 +161,9 @@
                                             </button>
                                             <button type="button" class="btn btn-success" id="initialize-device">
                                                 <i class="fa fa-cog"></i> <?php echo _l('zra_initialize_device'); ?>
+                                            </button>
+                                            <button type="button" class="btn btn-primary" id="fetch-device-identifiers">
+                                                <i class="fa fa-download"></i> <?php echo _l('zra_fetch_device_identifiers'); ?>
                                             </button>
                                             <button type="button" class="btn btn-warning" id="retrieve-standard-codes">
                                                 <i class="fa fa-list"></i> <?php echo _l('zra_retrieve_standard_codes'); ?>
@@ -226,6 +241,7 @@
     window.zraSettingsConfig = {
         testUrl: '<?php echo admin_url("zra_martin_invoicing/test_connection"); ?>',
         initializeUrl: '<?php echo admin_url("zra_martin_invoicing/initialize_device"); ?>',
+        fetchDeviceIdentifiersUrl: '<?php echo admin_url("zra_martin_invoicing/fetch_device_identifiers"); ?>',
         retrieveStandardCodesUrl: '<?php echo admin_url("zra_martin_invoicing/get_standard_codes"); ?>',
         retrieveItemCodesUrl: '<?php echo admin_url("zra_martin_invoicing/get_item_classification_codes"); ?>',
         retryPendingSubmissionsUrl: '<?php echo admin_url("zra_martin_invoicing/retry_pending_submissions"); ?>',
@@ -233,6 +249,8 @@
         connectionFailedText: '<?php echo _l("zra_connection_failed"); ?>',
         initializeSuccessfulText: '<?php echo _l("zra_device_initialization_successful"); ?>',
         initializeFailedText: '<?php echo _l("zra_device_initialization_failed"); ?>',
+        fetchDeviceIdentifiersSuccessText: '<?php echo _l("zra_fetch_device_identifiers_successful"); ?>',
+        fetchDeviceIdentifiersFailedText: '<?php echo _l("zra_fetch_device_identifiers_failed"); ?>',
         codesRetrievedSuccessText: '<?php echo _l("zra_codes_retrieved_successfully"); ?>',
         codesRetrievedFailedText: '<?php echo _l("zra_codes_retrieval_failed"); ?>',
         retryPendingSuccessText: '<?php echo _l("zra_pending_retries_processed"); ?>',

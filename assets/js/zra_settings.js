@@ -51,6 +51,23 @@ function zraParseResponseText(responseText) {
     }
 }
 
+function zraUpdateDeviceIdentifiers(responseData) {
+    if (!responseData || !responseData.identifiers) {
+        return;
+    }
+
+    var sdcInput = document.querySelector('input[name="zra_sdc_id"]');
+    var mrcInput = document.querySelector('input[name="zra_mrc_number"]');
+
+    if (sdcInput && typeof responseData.identifiers.sdc_id !== 'undefined') {
+        sdcInput.value = responseData.identifiers.sdc_id || '';
+    }
+
+    if (mrcInput && typeof responseData.identifiers.mrc_number !== 'undefined') {
+        mrcInput.value = responseData.identifiers.mrc_number || '';
+    }
+}
+
 function zraHandleAjaxError(btn, title, errorText, responseText) {
     zraSetInitializeStatus('error', title);
     if (typeof alert_float !== 'undefined') {
@@ -114,6 +131,7 @@ function zraExecutePost(url, btn, loadingText, successText, errorText) {
         }
         if (data.success) {
             zraSetInitializeStatus('success', successText);
+            zraUpdateDeviceIdentifiers(data);
             if (typeof alert_float !== 'undefined') {
                 alert_float('success', successText);
             }
@@ -141,6 +159,7 @@ function zraExecutePost(url, btn, loadingText, successText, errorText) {
 document.addEventListener('DOMContentLoaded', function() {
     var testButton = document.getElementById('test-api-connection');
     var initializeButton = document.getElementById('initialize-device');
+    var fetchIdentifiersButton = document.getElementById('fetch-device-identifiers');
 
     if (typeof console !== 'undefined') {
         console.log('ZRA settings JS loaded');
@@ -155,6 +174,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initializeButton) {
         initializeButton.addEventListener('click', function() {
             zraExecutePost(zraSettingsConfig.initializeUrl, initializeButton, 'Initializing device...', zraSettingsConfig.initializeSuccessfulText, zraSettingsConfig.initializeFailedText);
+        });
+    }
+
+    if (fetchIdentifiersButton) {
+        fetchIdentifiersButton.addEventListener('click', function() {
+            zraExecutePost(
+                zraSettingsConfig.fetchDeviceIdentifiersUrl,
+                fetchIdentifiersButton,
+                'Fetching SDC ID and MRC Number...',
+                zraSettingsConfig.fetchDeviceIdentifiersSuccessText,
+                zraSettingsConfig.fetchDeviceIdentifiersFailedText
+            );
         });
     }
 

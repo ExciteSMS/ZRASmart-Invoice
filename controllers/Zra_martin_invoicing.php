@@ -160,6 +160,20 @@ class Zra_martin_invoicing extends AdminController
         echo json_encode($result);
     }
 
+    public function fetch_device_identifiers()
+    {
+        if (!has_permission('zra_invoicing', '', 'edit')) {
+            ajax_access_denied();
+        }
+
+        $result = $this->zra_api_model->fetch_device_identifiers();
+        $result['csrf_token_name'] = $this->security->get_csrf_token_name();
+        $result['csrf_hash'] = $this->security->get_csrf_hash();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($result);
+    }
+
     public function get_standard_codes()
     {
         if (!has_permission('zra_invoicing', '', 'view')) {
@@ -397,6 +411,8 @@ class Zra_martin_invoicing extends AdminController
             'zra_company_tin',
             'zra_branch_id',
             'zra_device_serial',
+            'zra_sdc_id',
+            'zra_mrc_number',
             'zra_auto_submit_invoices',
             'zra_tax_rate_standard',
             'zra_tax_rate_zero',

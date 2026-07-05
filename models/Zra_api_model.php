@@ -15,8 +15,20 @@ class Zra_api_model extends CI_Model
     public function __construct()
     {
         parent::__construct();
+        $this->ensure_identifier_options_exist();
         $this->load_configuration();
         $this->ensure_log_table_exists();
+    }
+
+    private function ensure_identifier_options_exist()
+    {
+        if (get_option('zra_sdc_id') === false) {
+            add_option('zra_sdc_id', '');
+        }
+
+        if (get_option('zra_mrc_number') === false) {
+            add_option('zra_mrc_number', '');
+        }
     }
 
     private function load_configuration()
@@ -189,6 +201,34 @@ class Zra_api_model extends CI_Model
 
         if ($response['success']) {
             update_option('zra_device_initialized', '1');
+
+            $identifiers = $this->extract_device_identifiers($response);
+            if (!empty($identifiers['sdc_id'])) {
+                update_option('zra_sdc_id', $identifiers['sdc_id']);
+            }
+            if (!empty($identifiers['mrc_number'])) {
+                update_option('zra_mrc_number', $identifiers['mrc_number']);
+            }
+            $response['identifiers'] = $identifiers;
+        } else {
+            $response['identifiers'] = [
+                'sdc_id' => get_option('zra_sdc_id') ?: '',
+                'mrc_number' => get_option('zra_mrc_number') ?: ''
+            ];
+        }
+
+        return $response;
+    }
+
+    public function fetch_device_identifiers()
+    {
+        $response = $this->initialize_device();
+
+        if (empty($response['identifiers']) || !is_array($response['identifiers'])) {
+            $response['identifiers'] = [
+                'sdc_id' => get_option('zra_sdc_id') ?: '',
+                'mrc_number' => get_option('zra_mrc_number') ?: ''
+            ];
         }
 
         return $response;
@@ -1084,6 +1124,64 @@ class Zra_api_model extends CI_Model
         $lastResponse['attempted_endpoints'] = $attempts;
 
         return $lastResponse;
+    }
+
+    private function extract_device_identifiers(array $response)
+    {
+        $sources = [];
+
+        if (isset($response['data']) && is_array($response['data'])) {
+            $sources[] = $response['data'];
+        }
+        if (isset($response['raw_response']) && is_array($response['raw_response'])) {
+            $sources[] = $response['raw_response'];
+            if (isset($response['raw_response']['data']) && is_array($response['raw_response']['data'])) {
+                $sources[] = $response['raw_response']['data'];
+            }
+        }
+
+        $sdcId = $this->find_value_by_aliases($sources, ['sdcid', 'sdc_id', 'orgsdcid', 'org_sdc_id']);
+        $mrcNumber = $this->find_value_by_aliases($sources, ['mrcno', 'mrc_no', 'mrcnumber', 'mrc_number', 'mrcnum']);
+
+        return [
+            'sdc_id' => $sdcId,
+            'mrc_number' => $mrcNumber
+        ];
+    }
+
+    private function find_value_by_aliases(array $sources, array $aliases)
+    {
+        foreach ($sources as $source) {
+            if (!is_array($source)) {
+                continue;
+            }
+
+            $value = $this->find_value_in_tree($source, $aliases);
+            if ($value !== null && $value !== '') {
+                return (string) $value;
+            }
+        }
+
+        return '';
+    }
+
+    private function find_value_in_tree(array $node, array $aliases)
+    {
+        foreach ($node as $key => $value) {
+            $normalized = strtolower(preg_replace('/[^a-z0-9]/', '', (string) $key));
+            if (in_array($normalized, $aliases, true) && !is_array($value) && !is_object($value)) {
+                return $value;
+            }
+
+            if (is_array($value)) {
+                $nested = $this->find_value_in_tree($value, $aliases);
+                if ($nested !== null && $nested !== '') {
+                    return $nested;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function log_table_exists()

@@ -48,6 +48,8 @@ add_option('zra_api_url', 'https://localhost:8080/zrasandboxvsdc');
 add_option('zra_company_tin', '');
 add_option('zra_branch_id', '000');
 add_option('zra_device_serial', '');
+add_option('zra_sdc_id', '');
+add_option('zra_mrc_number', '');
 add_option('zra_device_initialized', '0');
 add_option('zra_auto_submit_invoices', '0');
 add_option('zra_tax_rate_standard', '16');
